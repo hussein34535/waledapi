@@ -27,7 +27,7 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
-# waledpro-f-firebase-adminsdk-fbsvc-593b6f3424.json
+waledpro-f-firebase-adminsdk-fbsvc-593b6f3424.json
 
 # vercel
 .vercel
