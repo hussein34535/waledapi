@@ -1,9 +1,11 @@
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { initializeApp, getApps } from 'firebase-admin/app';
 import { getMessaging } from 'firebase-admin/messaging';
+import { credential } from 'firebase-admin'; // Import credential from 'firebase-admin'
 
 if (!getApps().length) {
+  // Use applicationDefault() which reads FIREBASE_* env vars on Vercel
   initializeApp({
-    credential: cert('waledpro-f-firebase-adminsdk-fbsvc-593b6f3424.json'),
+    credential: credential.applicationDefault(),
   });
 }
 
