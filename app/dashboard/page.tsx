@@ -81,9 +81,6 @@ export default function Dashboard() {
             <Link href="/test" className="w-full sm:w-auto">
               <Button variant="outline" className="w-full sm:w-auto">Test Firebase</Button>
             </Link>
-            <Link href="/fcm-notifications" className="w-full sm:w-auto">
-              <Button variant="outline" className="w-full sm:w-auto">FCM Notifications</Button>
-            </Link>
             <Button onClick={() => setIsAddDialogOpen(true)} className="w-full sm:w-auto">
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Account

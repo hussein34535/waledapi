@@ -2,6 +2,7 @@ import { initializeApp, getApps, FirebaseApp, getApp } from "firebase/app"
 import { getFirestore } from "firebase/firestore"
 import { getAuth } from "firebase/auth"
 import { getDatabase } from "firebase/database"
+import { getMessaging, getToken } from "firebase/messaging"
 
 // Firebase app name - using a consistent name prevents duplicate app errors
 const APP_NAME = "waledapi-app";
@@ -56,6 +57,16 @@ const db = getFirestore(firebaseApp);
 const auth = getAuth(firebaseApp);
 const database = getDatabase(firebaseApp);
 
+// Initialize Firebase Cloud Messaging
+let messaging: any = null;
+if (typeof window !== 'undefined') {
+  try {
+    messaging = getMessaging(firebaseApp);
+  } catch (error) {
+    console.error("Firebase messaging not supported:", error);
+  }
+}
+
 // Database configuration for real-time data
 const dbConfig = {
   // These settings help ensure we always get fresh data
@@ -74,6 +85,55 @@ if (typeof window !== 'undefined') {
     }
   } catch (error) {
     console.warn("Could not configure database for real-time data:", error);
+  }
+}
+
+// Function to get FCM token and subscribe to topics
+export async function getFCMToken() {
+  if (!messaging) {
+    console.error("Firebase messaging is not initialized");
+    return null;
+  }
+
+  try {
+    // Request permission
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      console.error('Notification permission denied');
+      return null;
+    }
+
+    // Get token
+    const token = await getToken(messaging, {
+      vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
+    });
+    
+    console.log("FCM Token:", token);
+    
+    // Subscribe the token to the all_users topic
+    if (token) {
+      try {
+        // Send token to backend to subscribe to "all_users" topic
+        await fetch('/api/fcm/subscribe', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            token,
+            topic: 'all_users'
+          }),
+        });
+        console.log("Subscribed to all_users topic");
+      } catch (error) {
+        console.error("Error subscribing to topic:", error);
+      }
+    }
+    
+    return token;
+  } catch (error) {
+    console.error("Error getting FCM token:", error);
+    return null;
   }
 }
 

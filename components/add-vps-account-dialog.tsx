@@ -29,7 +29,7 @@ import { ref, push, set } from "firebase/database"
 import { database } from "@/lib/firebase"
 
 const formSchema = z.object({
-  type: z.enum(["SSH", "VLESS", "TROJAN", "SOCKS", "SHADOWSOCKS"]),
+  type: z.enum(["SSH", "VLESS", "TROJAN", "SOCKS", "SHADOWSOCKS", "MS"]),
   server_name: z.string().min(1, "Server name is required"),
   ip_address: z.string().optional(),
   username: z.string().optional(),
@@ -41,7 +41,7 @@ const formSchema = z.object({
   if (data.type === "SSH") {
     return data.ip_address && data.username && data.password && data.expiry_date
   }
-  if (data.type === "VLESS" || data.type === "TROJAN" || data.type === "SOCKS" || data.type === "SHADOWSOCKS") {
+  if (data.type === "VLESS" || data.type === "TROJAN" || data.type === "SOCKS" || data.type === "SHADOWSOCKS" || data.type === "MS") {
     return data.config
   }
   return true
@@ -200,6 +200,7 @@ export function AddVpsAccountDialog({ open, onOpenChange, userId, onAccountAdded
                             <SelectItem value="TROJAN">TROJAN</SelectItem>
                             <SelectItem value="SOCKS">SOCKS</SelectItem>
                             <SelectItem value="SHADOWSOCKS">Shadowsocks</SelectItem>
+                            <SelectItem value="MS">MS</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -303,7 +304,7 @@ export function AddVpsAccountDialog({ open, onOpenChange, userId, onAccountAdded
                   </>
                 )}
 
-                {(form.watch("type") === "VLESS" || form.watch("type") === "TROJAN" || form.watch("type") === "SOCKS" || form.watch("type") === "SHADOWSOCKS") && (
+                {(form.watch("type") === "VLESS" || form.watch("type") === "TROJAN" || form.watch("type") === "SOCKS" || form.watch("type") === "SHADOWSOCKS" || form.watch("type") === "MS") && (
                   <FormField
                     control={form.control}
                     name="config"

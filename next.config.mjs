@@ -19,6 +19,7 @@ const nextConfig = {
   experimental: {
     webpackBuildWorker: true,
   },
+  reactStrictMode: true,
 }
 
 mergeConfig(nextConfig, userConfig)

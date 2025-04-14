@@ -1,0 +1,1 @@
+export type VpsAccountType = "SSH" | "VLESS" | "TROJAN" | "SOCKS" | "SHADOWSOCKS" | "MS"; 

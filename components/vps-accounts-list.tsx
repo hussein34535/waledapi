@@ -27,6 +27,7 @@ export default function VpsAccountsList({ accounts, isLoading, newAccountId }: V
   const trojanAccounts = accounts.filter((account) => account.type === "TROJAN");
   const socksAccounts = accounts.filter((account) => account.type === "SOCKS");
   const shadowsocksAccounts = accounts.filter((account) => account.type === "SHADOWSOCKS");
+  const msAccounts = accounts.filter((account) => account.type === "MS" as any);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text)
@@ -47,6 +48,8 @@ export default function VpsAccountsList({ accounts, isLoading, newAccountId }: V
       case "SOCKS":
         return <Server className="h-4 w-4" />
       case "SHADOWSOCKS":
+        return <Server className="h-4 w-4" />
+      case "MS":
         return <Server className="h-4 w-4" />
       default:
         return <Server className="h-4 w-4" />
@@ -178,7 +181,7 @@ export default function VpsAccountsList({ accounts, isLoading, newAccountId }: V
               </>
             )}
 
-            {(account.type === "VLESS" || account.type === "TROJAN" || account.type === "SOCKS" || account.type === "SHADOWSOCKS") && (
+            {(account.type === "VLESS" || account.type === "TROJAN" || account.type === "SOCKS" || account.type === "SHADOWSOCKS" || account.type === "MS" as any) && (
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                 <span className="text-sm text-muted-foreground">Config</span>
                 <div className="flex items-center">
@@ -259,6 +262,15 @@ export default function VpsAccountsList({ accounts, isLoading, newAccountId }: V
           <h2 className="text-xl sm:text-2xl font-semibold">Shadowsocks Accounts</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {shadowsocksAccounts.map(renderAccountCard)}
+          </div>
+        </div>
+      )}
+
+      {msAccounts.length > 0 && (
+        <div className="space-y-4 mb-8">
+          <h2 className="text-xl sm:text-2xl font-semibold">MS Accounts</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {msAccounts.map(renderAccountCard)}
           </div>
         </div>
       )}

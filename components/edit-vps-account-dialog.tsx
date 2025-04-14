@@ -157,6 +157,7 @@ export default function EditVpsAccountDialog({ account, open, onOpenChange, onAc
                         <SelectItem value="TROJAN">TROJAN</SelectItem>
                         <SelectItem value="SOCKS">SOCKS</SelectItem>
                         <SelectItem value="SHADOWSOCKS">Shadowsocks</SelectItem>
+                        <SelectItem value="MS">MS</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

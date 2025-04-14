@@ -35,3 +35,6 @@ waledpro-f-firebase-adminsdk-fbsvc-593b6f3424.json
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# credenciales de firebase
+/creds/
