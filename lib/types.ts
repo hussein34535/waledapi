@@ -15,6 +15,5 @@ export type VpsAccount = {
 
 export type SniConfig = {
   id: string;
-  name: string;
   host: string;
 }

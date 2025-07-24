@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -16,60 +16,52 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { toast } from "sonner"
-import { ref, set } from "firebase/database"
-import { database } from "@/lib/firebase"
+import type { SniConfig } from "@/lib/types"
 
 const formSchema = z.object({
-  name: z.string().min(1, "Name is required"),
   host: z.string().min(1, "Host is required"),
 })
 
 type FormValues = z.infer<typeof formSchema>
 
-interface AddSniDialogProps {
+interface EditSniDialogProps {
+  sni: SniConfig;
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSniAdded: () => void;
+  onSniUpdated: () => void;
 }
 
-export function AddSniDialog({ open, onOpenChange, onSniAdded }: AddSniDialogProps) {
+export function EditSniDialog({ sni, open, onOpenChange, onSniUpdated }: EditSniDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      host: "",
+      host: sni.host,
     },
   })
+  
+  useEffect(() => {
+    form.reset({ host: sni.host });
+  }, [sni, form]);
 
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true)
-
     try {
       const response = await fetch('/api/sni', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(values),
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: sni.id, host: values.host }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to add SNI');
+        throw new Error('Failed to update SNI');
       }
-
-      toast.success("SNI added successfully");
-      onSniAdded(); // Call the refresh function
-      form.reset()
-      onOpenChange(false)
+      toast.success("SNI updated successfully");
+      onSniUpdated();
+      onOpenChange(false);
     } catch (error) {
-      console.error("Error adding SNI:", error)
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred"
-      toast.error("Error", {
-        description: `Failed to add SNI: ${errorMessage}`,
-      })
+      toast.error("Failed to update SNI");
     } finally {
       setIsSubmitting(false)
     }
@@ -79,26 +71,13 @@ export function AddSniDialog({ open, onOpenChange, onSniAdded }: AddSniDialogPro
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add SNI</DialogTitle>
+          <DialogTitle>Edit SNI: {sni.id}</DialogTitle>
           <DialogDescription>
-            Add a new SNI configuration. The name will be used as the ID.
+            Update the host for this SNI configuration.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="unique-sni-name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <FormField
               control={form.control}
               name="host"
@@ -117,7 +96,7 @@ export function AddSniDialog({ open, onOpenChange, onSniAdded }: AddSniDialogPro
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Adding..." : "Add SNI"}
+                {isSubmitting ? "Updating..." : "Update SNI"}
               </Button>
             </DialogFooter>
           </form>

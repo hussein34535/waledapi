@@ -18,7 +18,8 @@ export default function Dashboard() {
   const { user, loading } = useAuth();
   const [accounts, setAccounts] = useState<VpsAccount[]>([]);
   const [sniList, setSniList] = useState<SniConfig[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isVlessLoading, setIsVlessLoading] = useState(true);
+  const [isSniLoading, setIsSniLoading] = useState(true);
   const [isAddVlessDialogOpen, setIsAddVlessDialogOpen] = useState(false);
   const [isAddSniDialogOpen, setIsAddSniDialogOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,6 +28,22 @@ export default function Dashboard() {
   const handleAccountAdded = (accountId: string) => {
     setNewAccountId(accountId);
     setTimeout(() => setNewAccountId(null), 5000);
+  };
+
+  const fetchSniList = async () => {
+    setIsSniLoading(true);
+    try {
+      const response = await fetch('/api/sni');
+      if (!response.ok) {
+        throw new Error('Failed to fetch SNI list');
+      }
+      const data = await response.json();
+      setSniList(data);
+    } catch (error) {
+      console.error("API error (sni):", error);
+    } finally {
+      setIsSniLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -41,32 +58,18 @@ export default function Dashboard() {
         accountsData.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
       }
       setAccounts(accountsData);
-      setIsLoading(false);
+      setIsVlessLoading(false);
     }, (error) => {
       console.error("Database error (vpsAccounts):", error);
       setError(`Database error: ${error.message}`);
-      setIsLoading(false);
+      setIsVlessLoading(false);
     });
 
-    // Fetch SNI configs
-    const sniRef = ref(database, "sni");
-    const unsubscribeSni = onValue(sniRef, (snapshot) => {
-      const sniData: SniConfig[] = [];
-      if (snapshot.exists()) {
-        snapshot.forEach((childSnapshot) => {
-          sniData.push({ id: childSnapshot.key, ...childSnapshot.val() });
-        });
-      }
-      setSniList(sniData);
-    }, (error) => {
-      console.error("Database error (sni):", error);
-      // Not setting main error state here to avoid blocking UI for accounts
-    });
+    fetchSniList();
 
-    return () => {
-      unsubscribeAccounts();
-      unsubscribeSni();
-    };
+    // The original onValue listener for Realtime Database is removed
+    // to avoid permission issues. The API now handles data fetching.
+
   }, []);
 
   return (
@@ -97,11 +100,11 @@ export default function Dashboard() {
           <>
             <div className="mb-12">
               <h2 className="text-xl sm:text-2xl font-semibold mb-4">VLESS Accounts</h2>
-              <VpsAccountsList accounts={accounts} isLoading={isLoading} newAccountId={newAccountId} />
+              <VpsAccountsList accounts={accounts} isLoading={isVlessLoading} newAccountId={newAccountId} />
             </div>
             <div>
               <h2 className="text-xl sm:text-2xl font-semibold mb-4">SNI Configuration</h2>
-              <SniList sniList={sniList} isLoading={isLoading} />
+              <SniList sniList={sniList} isLoading={isSniLoading} onListChange={fetchSniList} />
             </div>
           </>
         )}
@@ -115,6 +118,7 @@ export default function Dashboard() {
         <AddSniDialog
           open={isAddSniDialogOpen}
           onOpenChange={setIsAddSniDialogOpen}
+          onSniAdded={fetchSniList}
         />
       </main>
     </div>
