@@ -12,3 +12,9 @@ export type VpsAccount = {
   updatedAt: number
   config?: string
 }
+
+export type SniConfig = {
+  id: string;
+  name: string;
+  host: string;
+}

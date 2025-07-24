@@ -22,13 +22,6 @@ export default function VpsAccountsList({ accounts, isLoading, newAccountId }: V
   const [editAccount, setEditAccount] = useState<VpsAccount | null>(null);
   const [deleteAccount, setDeleteAccount] = useState<VpsAccount | null>(null);
 
-  const sshAccounts = accounts.filter((account) => account.type === "SSH");
-  const vlessAccounts = accounts.filter((account) => account.type === "VLESS");
-  const trojanAccounts = accounts.filter((account) => account.type === "TROJAN");
-  const socksAccounts = accounts.filter((account) => account.type === "SOCKS");
-  const shadowsocksAccounts = accounts.filter((account) => account.type === "SHADOWSOCKS");
-  const msAccounts = accounts.filter((account) => account.type === "MS" as any);
-
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text)
     toast({
@@ -185,7 +178,7 @@ export default function VpsAccountsList({ accounts, isLoading, newAccountId }: V
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                 <span className="text-sm text-muted-foreground">Config</span>
                 <div className="flex items-center">
-                  <span className="text-sm font-medium truncate">{decryptedAccount.config || ""}</span>
+                  <span className="text-sm font-medium break-all">{decryptedAccount.config || ""}</span>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -221,59 +214,9 @@ export default function VpsAccountsList({ accounts, isLoading, newAccountId }: V
 
   return (
     <>
-      {sshAccounts.length > 0 && (
-        <div className="space-y-4 mb-8">
-          <h2 className="text-xl sm:text-2xl font-semibold">SSH Accounts</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sshAccounts.map(renderAccountCard)}
-          </div>
-        </div>
-      )}
-
-      {vlessAccounts.length > 0 && (
-        <div className="space-y-4 mb-8">
-          <h2 className="text-xl sm:text-2xl font-semibold">VLESS Accounts</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {vlessAccounts.map(renderAccountCard)}
-          </div>
-        </div>
-      )}
-
-      {trojanAccounts.length > 0 && (
-        <div className="space-y-4 mb-8">
-          <h2 className="text-xl sm:text-2xl font-semibold">Trojan Accounts</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {trojanAccounts.map(renderAccountCard)}
-          </div>
-        </div>
-      )}
-
-      {socksAccounts.length > 0 && (
-        <div className="space-y-4 mb-8">
-          <h2 className="text-xl sm:text-2xl font-semibold">SOCKS Accounts</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {socksAccounts.map(renderAccountCard)}
-          </div>
-        </div>
-      )}
-
-      {shadowsocksAccounts.length > 0 && (
-        <div className="space-y-4 mb-8">
-          <h2 className="text-xl sm:text-2xl font-semibold">Shadowsocks Accounts</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {shadowsocksAccounts.map(renderAccountCard)}
-          </div>
-        </div>
-      )}
-
-      {msAccounts.length > 0 && (
-        <div className="space-y-4 mb-8">
-          <h2 className="text-xl sm:text-2xl font-semibold">MS Accounts</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {msAccounts.map(renderAccountCard)}
-          </div>
-        </div>
-      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+        {accounts.map(renderAccountCard)}
+      </div>
 
       {editAccount && (
         <EditVpsAccountDialog

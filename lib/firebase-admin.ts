@@ -1,44 +1,57 @@
 // هذا الملف يستخدم فقط على الخادم
 // تحذير: لا تستورد هذا الملف من أي مكونات العميل
 import { initializeApp, getApps, cert } from "firebase-admin/app";
-import { getMessaging } from "firebase-admin/messaging";
+import { getFirestore } from "firebase-admin/firestore";
+import { getMessaging, Messaging } from "firebase-admin/messaging";
+import { getDatabase } from "firebase-admin/database";
+import path from 'path';
 
 // Initialize Firebase Admin SDK if not already initialized
 let firebaseAdminApp;
 
 try {
   if (!getApps().length) {
-    // Try to use service account from JSON file if available
-    try {
-      const serviceAccountPath = './service-account.json';
-      const fs = require('fs');
-      if (fs.existsSync(serviceAccountPath)) {
-        const serviceAccount = require(serviceAccountPath);
-        firebaseAdminApp = initializeApp({
-          credential: cert(serviceAccount),
-          databaseURL: process.env.NEXT_PUBLIC_DATABASE_URL,
-        });
-        console.log('Firebase Admin initialized with service account file');
-      } else {
-        // If file doesn't exist, try to use environment variables
-        firebaseAdminApp = initializeApp({
-          credential: cert({
-            projectId: process.env.NEXT_PUBLIC_PROJECT_ID,
-            clientEmail: process.env.FIREBASE_CLIENT_EMAIL || "",
-            privateKey: (process.env.FIREBASE_PRIVATE_KEY || "").replace(/\\n/g, '\n'),
-          }),
-          databaseURL: process.env.NEXT_PUBLIC_DATABASE_URL,
-        });
-        console.log('Firebase Admin initialized with environment variables');
-      }
-    } catch (error) {
-      console.error('Failed to initialize Firebase Admin with credentials:', error);
-      
-      // Fallback to application default credentials
+    // Prefer environment variables for initialization
+    if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+      console.log('Firebase Admin: Initializing with environment variables.');
       firebaseAdminApp = initializeApp({
+        credential: cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: (process.env.FIREBASE_PRIVATE_KEY).replace(/\\n/g, '\n'),
+        }),
         databaseURL: process.env.NEXT_PUBLIC_DATABASE_URL,
       });
-      console.log('Firebase Admin initialized with application default credentials');
+    } else {
+      // Fallback to service account file if env vars are not set
+      console.log('Firebase Admin: Environment variables not found, trying service account file.');
+      try {
+        const serviceAccountPath = path.join(process.cwd(), 'service-account.json');
+        const fs = require('fs');
+        if (fs.existsSync(serviceAccountPath)) {
+          let fileContents = fs.readFileSync(serviceAccountPath, 'utf8');
+          if (fileContents.charCodeAt(0) === 0xFEFF) {
+            fileContents = fileContents.slice(1);
+          }
+          const serviceAccount = JSON.parse(fileContents);
+          firebaseAdminApp = initializeApp({
+            credential: cert(serviceAccount),
+            databaseURL: process.env.NEXT_PUBLIC_DATABASE_URL,
+          });
+          console.log('Firebase Admin: Initialized with service account file.');
+        } else {
+          // Fallback to application default credentials
+          console.log('Firebase Admin: Service account file not found, using application default credentials.');
+          firebaseAdminApp = initializeApp({
+            databaseURL: process.env.NEXT_PUBLIC_DATABASE_URL,
+          });
+        }
+      } catch (error) {
+        console.error('Firebase Admin: Failed to initialize with service account file, using default credentials.', error);
+        firebaseAdminApp = initializeApp({
+          databaseURL: process.env.NEXT_PUBLIC_DATABASE_URL,
+        });
+      }
     }
   } else {
     firebaseAdminApp = getApps()[0];
@@ -47,12 +60,17 @@ try {
   console.error('Failed to initialize Firebase Admin:', error);
 }
 
-// Create messaging instance if Firebase Admin was initialized
-let adminMessaging: any;
-try {
-  adminMessaging = getMessaging(firebaseAdminApp);
-} catch (error) {
-  console.error('Failed to initialize Firebase Messaging:', error);
+let adminDb, adminDatabase;
+let adminMessaging: Messaging | undefined;
+
+if (firebaseAdminApp) {
+  adminDb = getFirestore(firebaseAdminApp);
+  adminDatabase = getDatabase(firebaseAdminApp);
+  try {
+    adminMessaging = getMessaging(firebaseAdminApp);
+  } catch (error) {
+    console.error('Failed to initialize Firebase Messaging:', error);
+  }
 }
 
 // Default topic that all Android app users will be subscribed to
@@ -134,4 +152,4 @@ export async function subscribeToTopic(tokens: string[], topic: string) {
   }
 }
 
-export { adminMessaging }; 
+export { adminDb, adminMessaging, adminDatabase };
