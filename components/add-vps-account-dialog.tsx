@@ -6,7 +6,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -20,10 +19,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { toast } from "sonner"
 import { ref, push, set } from "firebase/database"
 import { database } from "@/lib/firebase"
+import { X, Terminal, Wifi, Shield, Server, ChevronDown } from "lucide-react"
 
 const formSchema = z.object({
   type: z.enum(["SSH", "VMESS", "VLESS", "TROJAN", "SOCKS", "SHADOWSOCKS"]),
-  server_name: z.string().min(1, "Server name is required"),
+  server_name: z.string().min(1, "اسم السيرفر مطلوب"),
   ip_address: z.string().optional(),
   username: z.string().optional(),
   password: z.string().optional(),
@@ -33,6 +33,15 @@ const formSchema = z.object({
 })
 
 type FormValues = z.infer<typeof formSchema>
+
+const TYPE_OPTIONS = [
+  { value: "SSH", label: "SSH", icon: Terminal },
+  { value: "VMESS", label: "VMess", icon: Wifi },
+  { value: "VLESS", label: "VLESS", icon: Wifi },
+  { value: "TROJAN", label: "Trojan", icon: Shield },
+  { value: "SOCKS", label: "SOCKS", icon: Server },
+  { value: "SHADOWSOCKS", label: "Shadowsocks", icon: Shield },
+]
 
 interface AddVpsAccountDialogProps {
   open: boolean
@@ -46,62 +55,29 @@ export function AddVpsAccountDialog({ open, onOpenChange, userId, onAccountAdded
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      type: "VLESS",
-      server_name: "",
-      ip_address: "",
-      username: "",
-      password: "",
-      expiry_date: "",
-      config: "",
-      status: "active",
-    },
+    defaultValues: { type: "VLESS", server_name: "", ip_address: "", username: "", password: "", expiry_date: "", config: "", status: "active" },
   })
 
   const selectedType = form.watch("type")
 
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true)
-
     try {
-      const baseAccount: any = {
-        type: values.type,
-        server_name: values.server_name,
-        status: values.status,
-        userId: userId || "anonymous",
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      }
-
+      const base: any = { type: values.type, server_name: values.server_name, status: values.status, userId: userId || "anonymous", createdAt: Date.now(), updatedAt: Date.now() }
       if (values.type === "SSH") {
-        baseAccount.ip_address = values.ip_address
-        baseAccount.username = values.username
-        baseAccount.password = values.password
-        baseAccount.expiry_date = values.expiry_date
+        Object.assign(base, { ip_address: values.ip_address, username: values.username, password: values.password, expiry_date: values.expiry_date })
       } else {
-        baseAccount.config = values.config
+        base.config = values.config
       }
-
-      const accountsRef = ref(database, "vpsAccounts")
-      const newAccountRef = push(accountsRef)
-      await set(newAccountRef, baseAccount)
-
-      const newAccountId = newAccountRef.key
-
-      if (onAccountAdded && newAccountId) {
-        onAccountAdded(newAccountId)
-      }
-
-      toast.success("Account added successfully")
+      const ref_ = ref(database, "vpsAccounts")
+      const newRef = push(ref_)
+      await set(newRef, base)
+      if (onAccountAdded && newRef.key) onAccountAdded(newRef.key)
+      toast.success("تمت إضافة الحساب بنجاح")
       form.reset()
       onOpenChange(false)
-    } catch (error) {
-      console.error("Error adding account:", error)
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred"
-
-      toast.error("Error", {
-        description: `Failed to add VPS account: ${errorMessage}`,
-      })
+    } catch {
+      toast.error("فشلت إضافة الحساب")
     } finally {
       setIsSubmitting(false)
     }
@@ -109,168 +85,144 @@ export function AddVpsAccountDialog({ open, onOpenChange, userId, onAccountAdded
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>إضافة حساب</DialogTitle>
-          <DialogDescription>أدخل تفاصيل الحساب الجديد.</DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[480px] rounded-3xl sm:rounded-3xl border-border/60 p-0 gap-0 overflow-hidden bg-card">
+        <div className="p-6 pb-4 border-b border-border/30">
+          <div className="flex items-center justify-between">
+            <div>
+              <DialogTitle className="text-xl font-bold">إضافة حساب</DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground mt-1">أدخل تفاصيل الحساب الجديد</DialogDescription>
+            </div>
+            <button onClick={() => onOpenChange(false)} className="h-8 w-8 rounded-xl hover:bg-muted flex items-center justify-center transition-colors">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
+        <div className="p-6 max-h-[60vh] overflow-y-auto scrollbar-none">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <FormField control={form.control} name="type" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>النوع</FormLabel>
+                    <FormLabel className="text-xs font-medium text-muted-foreground">النوع</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="h-11 rounded-xl border-border/60 bg-background/50">
                           <SelectValue placeholder="اختر النوع" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="SSH">SSH</SelectItem>
-                        <SelectItem value="VMESS">VMess</SelectItem>
-                        <SelectItem value="VLESS">VLESS</SelectItem>
-                        <SelectItem value="TROJAN">TROJAN</SelectItem>
-                        <SelectItem value="SOCKS">SOCKS</SelectItem>
-                        <SelectItem value="SHADOWSOCKS">Shadowsocks</SelectItem>
+                      <SelectContent className="rounded-2xl border-border/60">
+                        {TYPE_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            <span className="flex items-center gap-2">
+                              <opt.icon className="h-4 w-4" />
+                              {opt.label}
+                            </span>
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
+                )} />
+                <FormField control={form.control} name="status" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>الحالة</FormLabel>
+                    <FormLabel className="text-xs font-medium text-muted-foreground">الحالة</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="h-11 rounded-xl border-border/60 bg-background/50">
                           <SelectValue placeholder="اختر الحالة" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="rounded-2xl border-border/60">
                         <SelectItem value="active">نشط</SelectItem>
                         <SelectItem value="inactive">غير نشط</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
-                )}
-              />
-            </div>
+                )} />
+              </div>
 
-            <FormField
-              control={form.control}
-              name="server_name"
-              render={({ field }) => (
+              <FormField control={form.control} name="server_name" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>اسم السيرفر</FormLabel>
+                  <FormLabel className="text-xs font-medium text-muted-foreground">اسم السيرفر</FormLabel>
                   <FormControl>
-                    <Input placeholder="اسم السيرفر" {...field} />
+                    <Input placeholder="اسم السيرفر" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
-              )}
-            />
+              )} />
 
-            {selectedType === "SSH" && (
-              <>
-                <FormField
-                  control={form.control}
-                  name="ip_address"
-                  render={({ field }) => (
+              {selectedType === "SSH" ? (
+                <>
+                  <FormField control={form.control} name="ip_address" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>IP Address</FormLabel>
+                      <FormLabel className="text-xs font-medium text-muted-foreground">IP Address</FormLabel>
                       <FormControl>
-                        <Input placeholder="192.168.1.1" {...field} />
+                        <Input placeholder="192.168.1.1" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
-                  )}
-                />
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="username"
-                    render={({ field }) => (
+                  )} />
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField control={form.control} name="username" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Username</FormLabel>
+                        <FormLabel className="text-xs font-medium text-muted-foreground">Username</FormLabel>
                         <FormControl>
-                          <Input placeholder="username" {...field} />
+                          <Input placeholder="username" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
+                    )} />
+                    <FormField control={form.control} name="password" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Password</FormLabel>
+                        <FormLabel className="text-xs font-medium text-muted-foreground">Password</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
+                          <Input type="password" placeholder="••••••••" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
-                    )}
-                  />
-                </div>
-                <FormField
-                  control={form.control}
-                  name="expiry_date"
-                  render={({ field }) => (
+                    )} />
+                  </div>
+                  <FormField control={form.control} name="expiry_date" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Expiry Date</FormLabel>
+                      <FormLabel className="text-xs font-medium text-muted-foreground">تاريخ الانتهاء</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <Input type="date" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
-                  )}
-                />
-              </>
-            )}
-
-            {(selectedType === "VMESS" || selectedType === "VLESS" || selectedType === "TROJAN" || selectedType === "SOCKS" || selectedType === "SHADOWSOCKS") && (
-              <FormField
-                control={form.control}
-                name="config"
-                render={({ field }) => (
+                  )} />
+                </>
+              ) : (
+                <FormField control={form.control} name="config" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Config</FormLabel>
+                    <FormLabel className="text-xs font-medium text-muted-foreground">Config</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder={selectedType === "VMESS" ? "vmess://..." : selectedType === "VLESS" ? "vless://..." : " configuration URL"}
-                        className="min-h-[100px]"
+                        placeholder={selectedType === "VMESS" ? "vmess://..." : selectedType === "VLESS" ? "vless://..." : "configuration URL"}
+                        className="min-h-[100px] rounded-xl border-border/60 bg-background/50 resize-none"
                         {...field}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
-                )}
-              />
-            )}
+                )} />
+              )}
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                إلغاء
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "جاري الإضافة..." : "إضافة حساب"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+              <div className="flex gap-3 pt-2">
+                <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1 h-11 rounded-xl border-border/60">
+                  إلغاء
+                </Button>
+                <Button type="submit" disabled={isSubmitting} className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/20">
+                  {isSubmitting ? "جاري الإضافة..." : "إضافة حساب"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </div>
       </DialogContent>
     </Dialog>
   )
 }
-

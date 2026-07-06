@@ -6,7 +6,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -17,6 +16,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { toast } from "sonner"
 import { useAuth } from "@/components/auth-provider"
+import { X, Globe } from "lucide-react"
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -37,90 +37,80 @@ export function AddSniDialog({ open, onOpenChange, onSniAdded }: AddSniDialogPro
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      host: "",
-    },
+    defaultValues: { name: "", host: "" },
   })
 
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true)
-
     try {
       const idToken = await user?.getIdToken();
       const response = await fetch('/api/sni', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`,
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
         body: JSON.stringify(values),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to add SNI');
-      }
-
-      toast.success("SNI added successfully");
+      if (!response.ok) throw new Error();
+      toast.success("تمت إضافة SNI بنجاح");
       onSniAdded();
       form.reset()
       onOpenChange(false)
     } catch {
-      toast.error("Error", {
-        description: "Failed to add SNI",
-      })
-    } finally {
-      setIsSubmitting(false)
-    }
+      toast.error("فشلت إضافة SNI")
+    } finally { setIsSubmitting(false) }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Add SNI</DialogTitle>
-          <DialogDescription>
-            Add a new SNI configuration. The name will be used as the ID.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
+      <DialogContent className="sm:max-w-[420px] rounded-3xl sm:rounded-3xl border-border/60 p-0 gap-0 overflow-hidden bg-card">
+        <div className="p-6 pb-4 border-b border-border/30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Globe className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl font-bold">Add SNI</DialogTitle>
+                <DialogDescription className="text-sm text-muted-foreground mt-0.5">إضافة تكوين SNI جديد</DialogDescription>
+              </div>
+            </div>
+            <button onClick={() => onOpenChange(false)} className="h-8 w-8 rounded-xl hover:bg-muted flex items-center justify-center">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField control={form.control} name="name" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel className="text-xs font-medium text-muted-foreground">Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="unique-sni-name" {...field} />
+                    <Input placeholder="unique-sni-name" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="host"
-              render={({ field }) => (
+              )} />
+              <FormField control={form.control} name="host" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Host</FormLabel>
+                  <FormLabel className="text-xs font-medium text-muted-foreground">Host</FormLabel>
                   <FormControl>
-                    <Input placeholder="example.com" {...field} />
+                    <Input placeholder="example.com" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Adding..." : "Add SNI"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+              )} />
+              <div className="flex gap-3 pt-2">
+                <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1 h-11 rounded-xl border-border/60">
+                  إلغاء
+                </Button>
+                <Button type="submit" disabled={isSubmitting} className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/20">
+                  {isSubmitting ? "جارِ..." : "إضافة"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </div>
       </DialogContent>
     </Dialog>
   )

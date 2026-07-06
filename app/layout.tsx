@@ -3,11 +3,15 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 
-const inter = Inter({ subsets: ["latin"], display: "fallback" });
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter",
+});
 
 export const metadata: Metadata = {
   title: "VPS Manager",
-  description: "Manage your VPS accounts in one place",
+  description: "لوحة تحكم لإدارة حسابات VPS",
 };
 
 export default function RootLayout({
@@ -16,8 +20,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} min-h-screen bg-background text-foreground`}>
+    <html lang="ar" dir="rtl" suppressHydrationWarning>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="theme-color" content="#0a0e1a" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+      </head>
+      <body className={`${inter.className} ${inter.variable} min-h-screen bg-background text-foreground antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>

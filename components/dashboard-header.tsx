@@ -1,80 +1,64 @@
 "use client"
 
-import { ModeToggle } from "@/components/mode-toggle";
-import { Server, Menu } from "lucide-react";
-import { Button } from "./ui/button";
+import { Server, LayoutDashboard, Bell, LogOut, Sun, Moon } from "lucide-react";
 import { Dispatch, SetStateAction, ReactNode, useState } from "react";
-import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
+import { useTheme } from "next-themes";
 
 interface Props {
   setIsLoggedIn: Dispatch<SetStateAction<boolean>>;
   children?: ReactNode;
 }
 
+const navItems = [
+  { icon: LayoutDashboard, label: "Dashboard", id: "dashboard" },
+  { icon: Bell, label: "Notifications", id: "notifications" },
+  { icon: Server, label: "Accounts", id: "accounts" },
+];
+
 export default function DashboardHeader({ setIsLoggedIn, children }: Props) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const { theme, setTheme } = useTheme();
 
   return (
     <>
-      <header className="bg-background py-4 border-b border-border sticky top-0 z-50">
-        <div className="container mx-auto px-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Server className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl text-foreground">VPS Manager</span>
-          </div>
-
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-4">
-            <span className="text-sm text-muted-foreground">
-              Admin Dashboard
-            </span>
-            <ModeToggle />
-            {setIsLoggedIn && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsLoggedIn(false);
-                }}
-              >
-                Logout
-              </Button>
-            )}
-          </div>
-
-          {/* Mobile Menu */}
-          <div className="md:hidden flex items-center space-x-2">
-            <ModeToggle />
-            <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-5 w-5" />
-                  <span className="sr-only">Toggle menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[300px]">
-                <div className="flex flex-col space-y-4 mt-4">
-                  <span className="text-sm text-muted-foreground">
-                    Admin Dashboard
-                  </span>
-                  {setIsLoggedIn && (
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => {
-                        setIsLoggedIn(false);
-                        setIsMenuOpen(false);
-                      }}
-                    >
-                      Logout
-                    </Button>
-                  )}
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
+      <nav className="fixed bottom-0 left-0 right-0 z-50 h-nav bg-background/80 backdrop-blur-2xl border-t border-border/50 safe-area-bottom">
+        <div className="flex items-center justify-around h-full max-w-lg mx-auto px-2">
+          <button
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="flex flex-col items-center justify-center w-12 h-10 rounded-xl text-muted-foreground hover:text-foreground transition-colors active:scale-90"
+          >
+            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </button>
+          {navItems.map(({ icon: Icon, label, id }) => (
+            <button
+              key={id}
+              onClick={() => setActiveTab(id)}
+              className={`flex flex-col items-center justify-center w-16 h-10 rounded-xl transition-all duration-300 active:scale-90 ${
+                activeTab === id
+                  ? "text-primary"
+                  : "text-muted-foreground/60 hover:text-muted-foreground"
+              }`}
+            >
+              <div className="relative">
+                <Icon className="h-5 w-5" />
+                {activeTab === id && (
+                  <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary animate-status-pulse" />
+                )}
+              </div>
+            </button>
+          ))}
+          <button
+            onClick={() => setIsLoggedIn(false)}
+            className="flex flex-col items-center justify-center w-12 h-10 rounded-xl text-muted-foreground/60 hover:text-destructive transition-colors active:scale-90"
+          >
+            <LogOut className="h-5 w-5" />
+          </button>
         </div>
-      </header>
-      {children}
+      </nav>
+
+      <div className="pb-nav">
+        {children}
+      </div>
     </>
   );
 }

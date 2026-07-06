@@ -11,16 +11,19 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
 
-  if (loading) {
-    return null
-  }
+  if (loading) return null
 
   const authenticated = !!(user || isLoggedIn)
 
   return (
     <>
-      {authenticated && <DashboardHeader setIsLoggedIn={setIsLoggedIn} />}
-      {authenticated ? children : <LoginForm setIsLoggedIn={setIsLoggedIn} />}
+      {authenticated ? (
+        <DashboardHeader setIsLoggedIn={setIsLoggedIn}>
+          {children}
+        </DashboardHeader>
+      ) : (
+        <LoginForm setIsLoggedIn={setIsLoggedIn} />
+      )}
     </>
   )
 }
@@ -29,7 +32,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider
       attribute="class"
-      defaultTheme="system"
+      defaultTheme="dark"
       enableSystem
       disableTransitionOnChange
       storageKey="theme"

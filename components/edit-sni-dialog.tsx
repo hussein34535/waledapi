@@ -6,7 +6,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -18,6 +17,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { toast } from "sonner"
 import type { SniConfig } from "@/lib/types"
 import { useAuth } from "@/components/auth-provider"
+import { X, Globe } from "lucide-react"
 
 const formSchema = z.object({
   host: z.string().min(1, "Host is required"),
@@ -38,14 +38,10 @@ export function EditSniDialog({ sni, open, onOpenChange, onSniUpdated }: EditSni
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      host: sni.host,
-    },
+    defaultValues: { host: sni.host },
   })
-  
-  useEffect(() => {
-    form.reset({ host: sni.host });
-  }, [sni, form]);
+
+  useEffect(() => { form.reset({ host: sni.host }) }, [sni, form])
 
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true)
@@ -53,60 +49,61 @@ export function EditSniDialog({ sni, open, onOpenChange, onSniUpdated }: EditSni
       const idToken = await user?.getIdToken();
       const response = await fetch('/api/sni', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`,
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
         body: JSON.stringify({ id: sni.id, host: values.host }),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to update SNI');
-      }
-      toast.success("SNI updated successfully");
+      if (!response.ok) throw new Error();
+      toast.success("تم تحديث SNI بنجاح");
       onSniUpdated();
       onOpenChange(false);
     } catch {
-      toast.error("Failed to update SNI");
-    } finally {
-      setIsSubmitting(false)
-    }
+      toast.error("فشل تحديث SNI")
+    } finally { setIsSubmitting(false) }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Edit SNI: {sni.id}</DialogTitle>
-          <DialogDescription>
-            Update the host for this SNI configuration.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="host"
-              render={({ field }) => (
+      <DialogContent className="sm:max-w-[420px] rounded-3xl sm:rounded-3xl border-border/60 p-0 gap-0 overflow-hidden bg-card">
+        <div className="p-6 pb-4 border-b border-border/30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Globe className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl font-bold">تعديل SNI</DialogTitle>
+                <DialogDescription className="text-sm text-muted-foreground mt-0.5">{sni.id}</DialogDescription>
+              </div>
+            </div>
+            <button onClick={() => onOpenChange(false)} className="h-8 w-8 rounded-xl hover:bg-muted flex items-center justify-center">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField control={form.control} name="host" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Host</FormLabel>
+                  <FormLabel className="text-xs font-medium text-muted-foreground">Host</FormLabel>
                   <FormControl>
-                    <Input placeholder="example.com" {...field} />
+                    <Input placeholder="example.com" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Updating..." : "Update SNI"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+              )} />
+              <div className="flex gap-3 pt-2">
+                <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1 h-11 rounded-xl border-border/60">
+                  إلغاء
+                </Button>
+                <Button type="submit" disabled={isSubmitting} className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/20">
+                  {isSubmitting ? "جارِ..." : "حفظ"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </div>
       </DialogContent>
     </Dialog>
   )

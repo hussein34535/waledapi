@@ -2,9 +2,7 @@
 
 import { useState } from "react"
 import type { SniConfig } from "@/lib/types"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { Trash2, Edit, Copy } from "lucide-react"
+import { Trash2, Edit, Copy, Globe } from "lucide-react"
 import { toast } from "sonner"
 import { EditSniDialog } from "./edit-sni-dialog"
 import { useAuth } from "@/components/auth-provider"
@@ -19,78 +17,71 @@ export default function SniList({ sniList, isLoading, onListChange }: SniListPro
   const { user } = useAuth();
   const [editingSni, setEditingSni] = useState<SniConfig | null>(null);
 
-  const copyToClipboard = (text: string, label: string) => {
+  const copyText = (text: string, label: string) => {
     navigator.clipboard.writeText(text)
-    toast.success(`${label} copied to clipboard`)
+    toast.success(`تم نسخ ${label}`)
   }
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this SNI?")) return;
+    if (!window.confirm("هل أنت متأكد من حذف SNI?")) return;
     try {
       const idToken = await user?.getIdToken();
       const response = await fetch(`/api/sni?id=${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${idToken}` },
       });
-      if (!response.ok) throw new Error('Failed to delete SNI');
-      toast.success("SNI deleted successfully");
+      if (!response.ok) throw new Error();
+      toast.success("تم حذف SNI بنجاح");
       onListChange();
     } catch {
-      toast.error("Failed to delete SNI");
+      toast.error("فشل حذف SNI");
     }
   }
 
   if (isLoading) {
-    return <div>Loading SNI list...</div>
-  }
-
-  if (sniList.length === 0) {
     return (
-      <div className="text-center py-8 sm:py-12">
-        <p className="mt-2 text-muted-foreground">No SNI configurations found. Add one to get started.</p>
+      <div className="space-y-2">
+        {[1, 2].map((i) => (
+          <div key={i} className="rounded-xl bg-card border border-border/50 p-4 animate-shimmer h-16" />
+        ))}
       </div>
     )
   }
 
+  if (sniList.length === 0) return null
+
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="space-y-2">
         {sniList.map((sni) => (
-          <Card key={sni.id}>
-            <CardContent className="p-4 sm:p-6 space-y-2">
-              <div className="flex justify-between items-start">
-                <h3 className="font-semibold">{sni.id}</h3>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyToClipboard(sni.id, "Name")}>
-                  <Copy className="h-4 w-4" />
-                </Button>
+          <div
+            key={sni.id}
+            className="rounded-xl bg-card border border-border/50 p-4 flex items-center justify-between hover:border-border/80 transition-colors animate-slide-up"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <Globe className="h-4 w-4 text-primary" />
               </div>
-              <div className="flex justify-between items-start">
-                <p className="text-muted-foreground break-all">{sni.host}</p>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyToClipboard(sni.host, "Host")}>
-                  <Copy className="h-4 w-4" />
-                </Button>
+              <div className="min-w-0">
+                <p className="font-medium text-sm truncate">{sni.id}</p>
+                <p className="text-xs text-muted-foreground truncate font-mono">{sni.host}</p>
               </div>
-            </CardContent>
-            <CardFooter className="bg-muted/50 px-4 sm:px-6 py-2 flex justify-between">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setEditingSni(sni)}
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-destructive hover:text-destructive"
-                onClick={() => handleDelete(sni.id)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </Button>
-            </CardFooter>
-          </Card>
+            </div>
+            <div className="flex items-center gap-1">
+              <button onClick={() => copyText(sni.id, "Name")} className="h-7 w-7 rounded-lg hover:bg-muted flex items-center justify-center active:scale-90">
+                <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+              </button>
+              <button onClick={() => copyText(sni.host, "Host")} className="h-7 w-7 rounded-lg hover:bg-muted flex items-center justify-center active:scale-90">
+                <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+              </button>
+              <button onClick={() => setEditingSni(sni)} className="h-7 w-7 rounded-lg hover:bg-muted flex items-center justify-center active:scale-90">
+                <Edit className="h-3.5 w-3.5 text-muted-foreground" />
+              </button>
+              <button onClick={() => handleDelete(sni.id)} className="h-7 w-7 rounded-lg hover:bg-destructive/10 flex items-center justify-center active:scale-90">
+                <Trash2 className="h-3.5 w-3.5 text-destructive/70" />
+              </button>
+            </div>
+          </div>
         ))}
       </div>
       {editingSni && (
