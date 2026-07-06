@@ -7,6 +7,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Trash2, Edit, Copy } from "lucide-react"
 import { toast } from "sonner"
 import { EditSniDialog } from "./edit-sni-dialog"
+import { useAuth } from "@/components/auth-provider"
 
 interface SniListProps {
   sniList: SniConfig[]
@@ -15,6 +16,7 @@ interface SniListProps {
 }
 
 export default function SniList({ sniList, isLoading, onListChange }: SniListProps) {
+  const { user } = useAuth();
   const [editingSni, setEditingSni] = useState<SniConfig | null>(null);
 
   const copyToClipboard = (text: string, label: string) => {
@@ -25,11 +27,15 @@ export default function SniList({ sniList, isLoading, onListChange }: SniListPro
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this SNI?")) return;
     try {
-      const response = await fetch(`/api/sni?id=${id}`, { method: 'DELETE' });
+      const idToken = await user?.getIdToken();
+      const response = await fetch(`/api/sni?id=${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${idToken}` },
+      });
       if (!response.ok) throw new Error('Failed to delete SNI');
       toast.success("SNI deleted successfully");
       onListChange();
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete SNI");
     }
   }

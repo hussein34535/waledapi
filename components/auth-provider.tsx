@@ -26,7 +26,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
           setUser(user);
           setLoading(false);
-          console.log("components/auth-provider.tsx onAuthStateChanged: user:", user); // Log after state update
         });
 
     return () => unsubscribe()

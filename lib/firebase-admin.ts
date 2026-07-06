@@ -10,18 +10,13 @@ let firebaseAdminApp;
 
 try {
   if (!getApps().length) {
-    // Prefer service account key from environment variable (Base64 encoded)
     if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-      console.log('Firebase Admin: Initializing with service account key from environment variable.');
       const serviceAccount = JSON.parse(Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_KEY, 'base64').toString('utf-8'));
       firebaseAdminApp = initializeApp({
         credential: cert(serviceAccount),
         databaseURL: process.env.NEXT_PUBLIC_DATABASE_URL,
       });
-    }
-    // Fallback to individual environment variables
-    else if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
-      console.log('Firebase Admin: Initializing with individual environment variables.');
+    } else if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
       firebaseAdminApp = initializeApp({
         credential: cert({
           projectId: process.env.FIREBASE_PROJECT_ID,
@@ -31,8 +26,6 @@ try {
         databaseURL: process.env.NEXT_PUBLIC_DATABASE_URL,
       });
     } else {
-      // Fallback to default credentials if nothing else is available
-      console.log('Firebase Admin: No specific credentials found, using application default credentials.');
       firebaseAdminApp = initializeApp({
         databaseURL: process.env.NEXT_PUBLIC_DATABASE_URL,
       });
@@ -87,11 +80,9 @@ export async function sendMessageToAndroidApp(title: string, body: string, data?
     };
 
     const response = await adminMessaging.send(message);
-    console.log('Successfully sent message to all Android users:', response);
     return { success: true, messageId: response };
-  } catch (error) {
-    console.error('Error sending message to Android users:', error);
-    throw error;
+  } catch {
+    throw new Error('Failed to send notification');
   }
 }
 
@@ -112,11 +103,9 @@ export async function sendMessageToTopic(topic: string, title: string, body: str
     };
 
     const response = await adminMessaging.send(message);
-    console.log('Successfully sent message to topic:', topic, response);
     return { success: true, messageId: response };
-  } catch (error) {
-    console.error('Error sending message to topic:', error);
-    throw error;
+  } catch {
+    throw new Error('Failed to send notification');
   }
 }
 
@@ -128,11 +117,9 @@ export async function subscribeToTopic(tokens: string[], topic: string) {
   
   try {
     const response = await adminMessaging.subscribeToTopic(tokens, topic);
-    console.log('Successfully subscribed to topic:', response);
     return { success: true, response };
-  } catch (error) {
-    console.error('Error subscribing to topic:', error);
-    throw error;
+  } catch {
+    throw new Error('Failed to subscribe to topic');
   }
 }
 

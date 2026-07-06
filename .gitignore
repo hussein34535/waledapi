@@ -38,3 +38,12 @@ next-env.d.ts
 
 # credenciales de firebase
 /creds/
+
+# encryption keys
+.env.key
+.env.encrypted
+
+# firebase service account files
+/creds/
+*firebase-adminsdk*
+*serviceAccount*

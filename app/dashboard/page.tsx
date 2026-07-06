@@ -44,14 +44,20 @@ export default function Dashboard() {
   const fetchSniList = async () => {
     setIsSniLoading(true);
     try {
-      const response = await fetch('/api/sni');
+      const idToken = await user?.getIdToken();
+      const response = await fetch('/api/sni', {
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch SNI list');
       }
       const data = await response.json();
       setSniList(data);
-    } catch (error) {
-      console.error("API error (sni):", error);
+    } catch {
+      setSniList([]);
     } finally {
       setIsSniLoading(false);
     }

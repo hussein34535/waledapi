@@ -36,17 +36,16 @@ export default function LoginForm({ setIsLoggedIn }: Props) {
         setIsLoggedIn(true);
         router.push("/dashboard");
       } else {
-        const errorData = await response.json();
         toast({
-          title: "Authentication Error",
-          description: errorData.message || "Invalid credentials",
+          title: "خطأ في تسجيل الدخول",
+          description: "البريد الإلكتروني أو كلمة المرور غير صحيحة",
           variant: "destructive",
         });
       }
-    } catch (error: any) {
+    } catch {
       toast({
-        title: "Authentication Error",
-        description: error.message || "An error occurred during login",
+        title: "خطأ في الاتصال",
+        description: "حدث خطأ في الاتصال بالخادم",
         variant: "destructive",
       });
     }
@@ -58,15 +57,15 @@ export default function LoginForm({ setIsLoggedIn }: Props) {
     <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <h2 className="text-2xl font-bold text-center">Login</h2>
+          <h2 className="text-2xl font-bold text-center">تسجيل الدخول</h2>
           <p className="text-sm text-muted-foreground text-center">
-            Enter your credentials to access the dashboard
+            أدخل بيانات الدخول للوصول إلى لوحة التحكم
           </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">البريد الإلكتروني</Label>
               <Input
                 id="email"
                 type="text"
@@ -75,10 +74,11 @@ export default function LoginForm({ setIsLoggedIn }: Props) {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full"
+                autoComplete="email"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">كلمة المرور</Label>
               <Input
                 id="password"
                 type="password"
@@ -86,10 +86,11 @@ export default function LoginForm({ setIsLoggedIn }: Props) {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full"
+                autoComplete="current-password"
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Logging in..." : "Login"}
+              {isLoading ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
             </Button>
           </form>
         </CardContent>
@@ -97,4 +98,3 @@ export default function LoginForm({ setIsLoggedIn }: Props) {
     </div>
   )
 }
-

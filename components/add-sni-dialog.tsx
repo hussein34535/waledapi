@@ -16,8 +16,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { toast } from "sonner"
-import { ref, set } from "firebase/database"
-import { database } from "@/lib/firebase"
+import { useAuth } from "@/components/auth-provider"
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -33,6 +32,7 @@ interface AddSniDialogProps {
 }
 
 export function AddSniDialog({ open, onOpenChange, onSniAdded }: AddSniDialogProps) {
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const form = useForm<FormValues>({
@@ -47,28 +47,27 @@ export function AddSniDialog({ open, onOpenChange, onSniAdded }: AddSniDialogPro
     setIsSubmitting(true)
 
     try {
+      const idToken = await user?.getIdToken();
       const response = await fetch('/api/sni', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
         },
         body: JSON.stringify(values),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to add SNI');
+        throw new Error('Failed to add SNI');
       }
 
       toast.success("SNI added successfully");
-      onSniAdded(); // Call the refresh function
+      onSniAdded();
       form.reset()
       onOpenChange(false)
-    } catch (error) {
-      console.error("Error adding SNI:", error)
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred"
+    } catch {
       toast.error("Error", {
-        description: `Failed to add SNI: ${errorMessage}`,
+        description: "Failed to add SNI",
       })
     } finally {
       setIsSubmitting(false)

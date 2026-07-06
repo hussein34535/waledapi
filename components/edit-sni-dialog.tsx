@@ -17,6 +17,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { toast } from "sonner"
 import type { SniConfig } from "@/lib/types"
+import { useAuth } from "@/components/auth-provider"
 
 const formSchema = z.object({
   host: z.string().min(1, "Host is required"),
@@ -32,6 +33,7 @@ interface EditSniDialogProps {
 }
 
 export function EditSniDialog({ sni, open, onOpenChange, onSniUpdated }: EditSniDialogProps) {
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const form = useForm<FormValues>({
@@ -48,9 +50,13 @@ export function EditSniDialog({ sni, open, onOpenChange, onSniUpdated }: EditSni
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true)
     try {
+      const idToken = await user?.getIdToken();
       const response = await fetch('/api/sni', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
+        },
         body: JSON.stringify({ id: sni.id, host: values.host }),
       });
 
@@ -60,7 +66,7 @@ export function EditSniDialog({ sni, open, onOpenChange, onSniUpdated }: EditSni
       toast.success("SNI updated successfully");
       onSniUpdated();
       onOpenChange(false);
-    } catch (error) {
+    } catch {
       toast.error("Failed to update SNI");
     } finally {
       setIsSubmitting(false)

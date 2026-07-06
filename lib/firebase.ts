@@ -25,30 +25,15 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_APP_ID
 }
 
-// Log firebase config (except for sensitive info)
-console.log("Firebase Config (Vercel):", { 
-  hasApiKey: !!process.env.NEXT_PUBLIC_API_KEY,
-  databaseURL: process.env.NEXT_PUBLIC_DATABASE_URL,
-  projectId: process.env.NEXT_PUBLIC_PROJECT_ID,
-  environment: process.env.NODE_ENV,
-  appName: APP_NAME
-});
-
-// Initialize Firebase - safely handle potential duplicate initializations
 let firebaseApp: FirebaseApp;
 
 try {
-  // Check if app with this name already exists and get it
   firebaseApp = getApp(APP_NAME);
-  console.log(`Using existing Firebase app with name: ${APP_NAME}`);
-} catch (error) {
-  // App doesn't exist yet, create a new one with our specific name
+} catch {
   try {
     firebaseApp = initializeApp(firebaseConfig, APP_NAME);
-    console.log(`Firebase initialized successfully with name: ${APP_NAME} in ${process.env.NODE_ENV} environment!`);
-  } catch (error: any) {
-    console.error("Firebase initialization error:", error);
-    throw new Error('Failed to initialize Firebase: ' + error.message);
+  } catch {
+    throw new Error('Failed to initialize Firebase');
   }
 }
 
@@ -73,18 +58,14 @@ const dbConfig = {
   synchronizeTabs: false, // Don't sync data across tabs
 };
 
-// Configure database for non-caching on client-side only
 if (typeof window !== 'undefined') {
   try {
-    // Add timestamp to database URL to prevent caching
     database.app.options.databaseURL = addTimestampToURL(database.app.options.databaseURL);
-    
-    // Apply additional settings if supported
     if ((database as any).settings) {
       (database as any).settings(dbConfig);
     }
-  } catch (error) {
-    console.warn("Could not configure database for real-time data:", error);
+  } catch {
+    // Non-critical configuration
   }
 }
 
@@ -108,12 +89,8 @@ export async function getFCMToken() {
       vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
     });
     
-    console.log("FCM Token:", token);
-    
-    // Subscribe the token to the all_users topic
     if (token) {
       try {
-        // Send token to backend to subscribe to "all_users" topic
         await fetch('/api/fcm/subscribe', {
           method: 'POST',
           headers: {
@@ -124,9 +101,8 @@ export async function getFCMToken() {
             topic: 'all_users'
           }),
         });
-        console.log("Subscribed to all_users topic");
-      } catch (error) {
-        console.error("Error subscribing to topic:", error);
+      } catch {
+        // FCM subscription failed silently
       }
     }
     

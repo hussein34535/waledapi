@@ -1,0 +1,38 @@
+{
+  "rules": {
+    "vpsAccounts": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$accountId": {
+        ".validate": "newData.hasChildren(['type', 'server_name', 'status', 'createdAt', 'updatedAt'])",
+        "type": {
+          ".validate": "newData.val() === 'SSH' || newData.val() === 'VMESS' || newData.val() === 'VLESS' || newData.val() === 'TROJAN' || newData.val() === 'SOCKS' || newData.val() === 'SHADOWSOCKS' || newData.val() === 'MS'"
+        },
+        "server_name": { ".validate": "newData.isString() && newData.val().length > 0" },
+        "ip_address": { ".validate": "newData.isString()" },
+        "username": { ".validate": "newData.isString()" },
+        "password": { ".validate": "newData.isString()" },
+        "expiry_date": { ".validate": "newData.isString()" },
+        "config": { ".validate": "newData.isString()" },
+        "status": { ".validate": "newData.val() === 'active' || newData.val() === 'inactive'" },
+        "userId": { ".validate": "newData.isString()" },
+        "createdAt": { ".validate": "newData.isNumber()" },
+        "updatedAt": { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
+      }
+    },
+    "sni": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$name": {
+        ".validate": "newData.hasChildren(['host'])",
+        "host": { ".validate": "newData.isString() && newData.val().length > 0" },
+        "$other": { ".validate": false }
+      }
+    },
+    "$other": {
+      ".read": false,
+      ".write": false
+    }
+  }
+}
