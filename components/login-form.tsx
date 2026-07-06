@@ -2,17 +2,15 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { signInWithEmailAndPassword } from "firebase/auth"
+import { auth } from "@/lib/firebase"
 import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Server, Eye, EyeOff, ArrowLeft } from "lucide-react"
 
-interface Props {
-  setIsLoggedIn: (value: boolean) => void
-}
-
-export default function LoginForm({ setIsLoggedIn }: Props) {
+export default function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -48,14 +46,16 @@ export default function LoginForm({ setIsLoggedIn }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, honeypot: "", timestamp: String(Date.now()) }),
       })
-      if (response.ok) {
-        setFailedAttempts(0)
-        setIsLoggedIn(true)
-        router.push("/dashboard")
-      } else {
+      if (!response.ok) {
         setFailedAttempts((p) => p + 1)
         toast({ title: "خطأ في تسجيل الدخول", description: "البريد الإلكتروني أو كلمة المرور غير صحيحة", variant: "destructive" })
+        setIsLoading(false)
+        return
       }
+
+      await signInWithEmailAndPassword(auth, email, password)
+      setFailedAttempts(0)
+      router.push("/dashboard")
     } catch {
       toast({ title: "خطأ في الاتصال", description: "حدث خطأ في الاتصال بالخادم", variant: "destructive" })
     }

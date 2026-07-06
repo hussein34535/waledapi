@@ -1,11 +1,11 @@
 "use client"
 
 import { Server, LayoutDashboard, Bell, LogOut, Sun, Moon } from "lucide-react";
-import { Dispatch, SetStateAction, ReactNode, useState } from "react";
+import { ReactNode, useState } from "react";
 import { useTheme } from "next-themes";
 
 interface Props {
-  setIsLoggedIn: Dispatch<SetStateAction<boolean>>;
+  onLogout: () => void;
   children?: ReactNode;
 }
 
@@ -15,7 +15,7 @@ const navItems = [
   { icon: Server, label: "Accounts", id: "accounts" },
 ];
 
-export default function DashboardHeader({ setIsLoggedIn, children }: Props) {
+export default function DashboardHeader({ onLogout, children }: Props) {
   const [activeTab, setActiveTab] = useState("dashboard");
   const { theme, setTheme } = useTheme();
 
@@ -48,7 +48,7 @@ export default function DashboardHeader({ setIsLoggedIn, children }: Props) {
             </button>
           ))}
           <button
-            onClick={() => setIsLoggedIn(false)}
+            onClick={onLogout}
             className="flex flex-col items-center justify-center w-12 h-10 rounded-xl text-muted-foreground/60 hover:text-destructive transition-colors active:scale-90"
           >
             <LogOut className="h-5 w-5" />
