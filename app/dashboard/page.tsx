@@ -3,24 +3,35 @@
 import { useEffect, useState } from "react"
 import { ref, onValue } from "firebase/database"
 import type { VpsAccount } from "@/lib/types"
-import type { SniConfig } from "@/lib/types" // Assuming you'll add this type
+import type { SniConfig } from "@/lib/types"
 import VpsAccountsList from "@/components/vps-accounts-list"
 import { AddVpsAccountDialog } from "@/components/add-vps-account-dialog"
-import { AddSniDialog } from "@/components/add-sni-dialog" // Assuming you'll create this
-import SniList from "@/components/sni-list" // Assuming you'll create this
+import { AddSniDialog } from "@/components/add-sni-dialog"
+import SniList from "@/components/sni-list"
 import { Button } from "@/components/ui/button"
-import { PlusCircle } from "lucide-react"
+import { PlusCircle, Server, Wifi, Terminal, Shield } from "lucide-react"
 import { useAuth } from "@/components/auth-provider"
-import Link from "next/link"
 import { database } from "@/lib/firebase"
 
+type AccountType = "SSH" | "VMESS" | "VLESS" | "TROJAN" | "SOCKS" | "SHADOWSOCKS" | "MS";
+
+const SECTION_TYPES: { type: AccountType; label: string; icon: React.ReactNode }[] = [
+  { type: "SSH", label: "SSH Accounts", icon: <Terminal className="h-5 w-5" /> },
+  { type: "VMESS", label: "VMess Accounts", icon: <Wifi className="h-5 w-5" /> },
+  { type: "VLESS", label: "VLESS Accounts", icon: <Wifi className="h-5 w-5" /> },
+  { type: "TROJAN", label: "Trojan Accounts", icon: <Shield className="h-5 w-5" /> },
+  { type: "SOCKS", label: "SOCKS Accounts", icon: <Server className="h-5 w-5" /> },
+  { type: "SHADOWSOCKS", label: "Shadowsocks Accounts", icon: <Shield className="h-5 w-5" /> },
+  { type: "MS", label: "MS Accounts", icon: <Server className="h-5 w-5" /> },
+];
+
 export default function Dashboard() {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const [accounts, setAccounts] = useState<VpsAccount[]>([]);
   const [sniList, setSniList] = useState<SniConfig[]>([]);
-  const [isVlessLoading, setIsVlessLoading] = useState(true);
+  const [isAccountsLoading, setIsAccountsLoading] = useState(true);
   const [isSniLoading, setIsSniLoading] = useState(true);
-  const [isAddVlessDialogOpen, setIsAddVlessDialogOpen] = useState(false);
+  const [isAddAccountDialogOpen, setIsAddAccountDialogOpen] = useState(false);
   const [isAddSniDialogOpen, setIsAddSniDialogOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [newAccountId, setNewAccountId] = useState<string | null>(null);
@@ -47,7 +58,6 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    // Fetch VLESS accounts
     const accountsRef = ref(database, "vpsAccounts");
     const unsubscribeAccounts = onValue(accountsRef, (snapshot) => {
       const accountsData: VpsAccount[] = [];
@@ -58,19 +68,22 @@ export default function Dashboard() {
         accountsData.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
       }
       setAccounts(accountsData);
-      setIsVlessLoading(false);
+      setIsAccountsLoading(false);
     }, (error) => {
       console.error("Database error (vpsAccounts):", error);
       setError(`Database error: ${error.message}`);
-      setIsVlessLoading(false);
+      setIsAccountsLoading(false);
     });
 
     fetchSniList();
 
-    // The original onValue listener for Realtime Database is removed
-    // to avoid permission issues. The API now handles data fetching.
-
+    return () => unsubscribeAccounts();
   }, []);
+
+  const getAccountsByType = (type: AccountType) =>
+    accounts.filter((a) => a.type === type);
+
+  const hasAccounts = accounts.length > 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -78,9 +91,9 @@ export default function Dashboard() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
           <div className="flex flex-col sm:flex-row gap-2">
-            <Button onClick={() => setIsAddVlessDialogOpen(true)} className="w-full sm:w-auto">
+            <Button onClick={() => setIsAddAccountDialogOpen(true)} className="w-full sm:w-auto">
               <PlusCircle className="mr-2 h-4 w-4" />
-              Add VLESS
+              إضافة حساب
             </Button>
             <Button onClick={() => setIsAddSniDialogOpen(true)} className="w-full sm:w-auto" variant="outline">
               <PlusCircle className="mr-2 h-4 w-4" />
@@ -98,11 +111,39 @@ export default function Dashboard() {
           </div>
         ) : (
           <>
-            <div className="mb-12">
-              <h2 className="text-xl sm:text-2xl font-semibold mb-4">VLESS Accounts</h2>
-              <VpsAccountsList accounts={accounts} isLoading={isVlessLoading} newAccountId={newAccountId} />
-            </div>
-            <div>
+            {SECTION_TYPES.map(({ type, label, icon }) => {
+              const typeAccounts = getAccountsByType(type);
+              return (
+                <div key={type} className="mb-10">
+                  <h2 className="text-xl sm:text-2xl font-semibold mb-4 flex items-center gap-2">
+                    {icon}
+                    {label}
+                    <span className="text-sm font-normal text-muted-foreground ml-2">
+                      ({typeAccounts.length})
+                    </span>
+                  </h2>
+                  <VpsAccountsList
+                    accounts={typeAccounts}
+                    isLoading={isAccountsLoading}
+                    newAccountId={newAccountId}
+                  />
+                </div>
+              );
+            })}
+
+            {!isAccountsLoading && !hasAccounts && (
+              <div className="text-center py-12">
+                <Server className="mx-auto h-12 w-12 text-muted-foreground" />
+                <h3 className="mt-4 text-lg font-medium">لا توجد حسابات</h3>
+                <p className="mt-2 text-muted-foreground">أضف حساب SSH أو VMess أو VLESS للبدء</p>
+                <Button onClick={() => setIsAddAccountDialogOpen(true)} className="mt-4">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  إضافة حساب
+                </Button>
+              </div>
+            )}
+
+            <div className="mt-12">
               <h2 className="text-xl sm:text-2xl font-semibold mb-4">SNI Configuration</h2>
               <SniList sniList={sniList} isLoading={isSniLoading} onListChange={fetchSniList} />
             </div>
@@ -110,8 +151,8 @@ export default function Dashboard() {
         )}
 
         <AddVpsAccountDialog
-          open={isAddVlessDialogOpen}
-          onOpenChange={setIsAddVlessDialogOpen}
+          open={isAddAccountDialogOpen}
+          onOpenChange={setIsAddAccountDialogOpen}
           userId={user?.uid}
           onAccountAdded={handleAccountAdded}
         />

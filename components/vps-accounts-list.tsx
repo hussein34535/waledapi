@@ -34,6 +34,8 @@ export default function VpsAccountsList({ accounts, isLoading, newAccountId }: V
     switch (type) {
       case "SSH":
         return <Server className="h-4 w-4" />
+      case "VMESS":
+        return <Server className="h-4 w-4" />
       case "VLESS":
         return <Server className="h-4 w-4" />
       case "TROJAN":
@@ -174,7 +176,7 @@ export default function VpsAccountsList({ accounts, isLoading, newAccountId }: V
               </>
             )}
 
-            {(account.type === "VLESS" || account.type === "TROJAN" || account.type === "SOCKS" || account.type === "SHADOWSOCKS" || account.type === "MS" as any) && (
+            {(account.type === "VMESS" || account.type === "VLESS" || account.type === "TROJAN" || account.type === "SOCKS" || account.type === "SHADOWSOCKS" || account.type === "MS" as any) && (
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                 <span className="text-sm text-muted-foreground">Config</span>
                 <div className="flex items-center">

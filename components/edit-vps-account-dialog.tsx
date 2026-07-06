@@ -35,7 +35,7 @@ import { database } from "@/lib/firebase"
 import { toast } from "sonner"
 
 const formSchema = z.object({
-  type: z.enum(["SSH", "VLESS", "TROJAN", "SOCKS", "SHADOWSOCKS"]),
+  type: z.enum(["SSH", "VMESS", "VLESS", "TROJAN", "SOCKS", "SHADOWSOCKS"]),
   server_name: z.string().min(1, "Server name is required"),
   ip_address: z.string().optional(),
   username: z.string().optional(),
@@ -47,7 +47,7 @@ const formSchema = z.object({
   if (data.type === "SSH") {
     return data.ip_address && data.username && data.password && data.expiry_date
   }
-  if (data.type === "VLESS" || data.type === "TROJAN" || data.type === "SOCKS" || data.type === "SHADOWSOCKS") {
+  if (data.type === "VMESS" || data.type === "VLESS" || data.type === "TROJAN" || data.type === "SOCKS" || data.type === "SHADOWSOCKS") {
     return data.config
   }
   return true
@@ -71,7 +71,7 @@ export default function EditVpsAccountDialog({ account, open, onOpenChange, onAc
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      type: account.type as "SSH" | "VLESS" | "TROJAN" | "SOCKS" | "SHADOWSOCKS",
+      type: account.type as "SSH" | "VMESS" | "VLESS" | "TROJAN" | "SOCKS" | "SHADOWSOCKS",
       server_name: account.server_name || "",
       ip_address: account.type === "SSH" ? account.ip_address : "",
       username: account.type === "SSH" ? account.username : "",
@@ -153,6 +153,7 @@ export default function EditVpsAccountDialog({ account, open, onOpenChange, onAc
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="SSH">SSH</SelectItem>
+                        <SelectItem value="VMESS">VMess</SelectItem>
                         <SelectItem value="VLESS">VLESS</SelectItem>
                         <SelectItem value="TROJAN">TROJAN</SelectItem>
                         <SelectItem value="SOCKS">SOCKS</SelectItem>
@@ -264,7 +265,7 @@ export default function EditVpsAccountDialog({ account, open, onOpenChange, onAc
               </>
             )}
 
-            {(form.watch("type") === "VLESS" || form.watch("type") === "TROJAN" || form.watch("type") === "SOCKS" || form.watch("type") === "SHADOWSOCKS") && (
+            {(form.watch("type") === "VMESS" || form.watch("type") === "VLESS" || form.watch("type") === "TROJAN" || form.watch("type") === "SOCKS" || form.watch("type") === "SHADOWSOCKS") && (
               <FormField
                 control={form.control}
                 name="config"
