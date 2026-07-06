@@ -1,61 +1,75 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDatabase } from "@/lib/firebase-admin";
-import { verifyAuthToken, unauthorizedResponse, checkRateLimit, rateLimitResponse } from "@/lib/auth-middleware";
+import { verifyAuthToken, securityCheck } from "@/lib/security";
 import { z } from "zod";
 
 const postSchema = z.object({
-  name: z.string().min(1).max(100).trim(),
-  host: z.string().min(1).max(500).trim(),
+  name: z.string().min(1).max(50).trim().regex(/^[a-zA-Z0-9_-]+$/),
+  host: z.string().min(1).max(253).trim().regex(/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/),
 });
 
 const putSchema = z.object({
-  id: z.string().min(1).max(100).trim(),
-  host: z.string().min(1).max(500).trim(),
+  id: z.string().min(1).max(50).trim().regex(/^[a-zA-Z0-9_-]+$/),
+  host: z.string().min(1).max(253).trim().regex(/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/),
 });
 
+const CSRF_TOKENS = new Map<string, number>();
+
+function generateCsrfToken(): string {
+  const token = Array.from({ length: 32 }, () => Math.random().toString(36)[2]).join("");
+  CSRF_TOKENS.set(token, Date.now());
+  return token;
+}
+
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for") || "unknown";
-  if (!checkRateLimit(ip)) return rateLimitResponse();
+  const body = await req.json().catch(() => ({}));
+  const blocked = await securityCheck(req, body);
+  if (blocked) return blocked;
 
   const user = await verifyAuthToken(req);
   if (!user) return unauthorizedResponse();
 
   if (!adminDatabase) {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Error" }, { status: 500 });
   }
-  try {
-    const body = await req.json();
-    const parsedData = postSchema.safeParse(body);
 
+  try {
+    const parsedData = postSchema.safeParse(body);
     if (!parsedData.success) {
       return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
     const { name, host } = parsedData.data;
-    const sniRef = adminDatabase.ref(`sni/${name}`);
-    await sniRef.set({ host, createdBy: user.uid, createdAt: Date.now() });
+    const existing = await adminDatabase.ref(`sni/${name}`).once("value");
+    if (existing.exists()) {
+      return NextResponse.json({ error: "Name already exists" }, { status: 409 });
+    }
 
-    return NextResponse.json({ message: "SNI added successfully" }, { status: 201 });
-  } catch (error) {
-    console.error("Error adding SNI:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    await adminDatabase.ref(`sni/${name}`).set({
+      host,
+      createdBy: user.uid,
+      createdAt: Date.now(),
+    });
+
+    return NextResponse.json({ message: "SNI added successfully", csrf: generateCsrfToken() }, { status: 201 });
+  } catch {
+    return NextResponse.json({ error: "Error" }, { status: 500 });
   }
 }
 
 export async function GET(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for") || "unknown";
-  if (!checkRateLimit(ip)) return rateLimitResponse();
+  const blocked = await securityCheck(req);
+  if (blocked) return blocked;
 
   const user = await verifyAuthToken(req);
   if (!user) return unauthorizedResponse();
 
   if (!adminDatabase) {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Error" }, { status: 500 });
   }
-  try {
-    const sniRef = adminDatabase.ref('sni');
-    const snapshot = await sniRef.once('value');
 
+  try {
+    const snapshot = await adminDatabase.ref("sni").once("value");
     if (snapshot.exists()) {
       const data = snapshot.val();
       const sniList = Object.keys(data).map(key => ({
@@ -63,68 +77,73 @@ export async function GET(req: NextRequest) {
         host: data[key].host,
       }));
       return NextResponse.json(sniList, { status: 200 });
-    } else {
-      return NextResponse.json([], { status: 200 });
     }
-  } catch (error) {
-    console.error("Error fetching SNI list:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json([], { status: 200 });
+  } catch {
+    return NextResponse.json({ error: "Error" }, { status: 500 });
   }
 }
 
 export async function PUT(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for") || "unknown";
-  if (!checkRateLimit(ip)) return rateLimitResponse();
+  const body = await req.json().catch(() => ({}));
+  const blocked = await securityCheck(req, body);
+  if (blocked) return blocked;
 
   const user = await verifyAuthToken(req);
   if (!user) return unauthorizedResponse();
 
   if (!adminDatabase) {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Error" }, { status: 500 });
   }
-  try {
-    const body = await req.json();
-    const parsedData = putSchema.safeParse(body);
 
+  try {
+    const parsedData = putSchema.safeParse(body);
     if (!parsedData.success) {
       return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
     const { id, host } = parsedData.data;
-    const sniRef = adminDatabase.ref(`sni/${id}`);
-    await sniRef.set({ host, updatedBy: user.uid, updatedAt: Date.now() });
+    await adminDatabase.ref(`sni/${id}`).update({
+      host,
+      updatedBy: user.uid,
+      updatedAt: Date.now(),
+    });
 
     return NextResponse.json({ message: "SNI updated successfully" }, { status: 200 });
-  } catch (error) {
-    console.error("Error updating SNI:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Error" }, { status: 500 });
   }
 }
 
 export async function DELETE(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for") || "unknown";
-  if (!checkRateLimit(ip)) return rateLimitResponse();
+  const body = await req.json().catch(() => ({}));
+  const blocked = await securityCheck(req, body);
+  if (blocked) return blocked;
 
   const user = await verifyAuthToken(req);
   if (!user) return unauthorizedResponse();
 
   if (!adminDatabase) {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Error" }, { status: 500 });
   }
+
   try {
     const { searchParams } = new URL(req.url);
-    const id = searchParams.get('id');
-
-    if (!id) {
-      return NextResponse.json({ error: "ID is required" }, { status: 400 });
+    const id = searchParams.get("id");
+    if (!id || !/^[a-zA-Z0-9_-]+$/.test(id)) {
+      return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
     }
 
-    const sniRef = adminDatabase.ref(`sni/${id}`);
-    await sniRef.remove();
-
+    await adminDatabase.ref(`sni/${id}`).remove();
     return NextResponse.json({ message: "SNI deleted successfully" }, { status: 200 });
-  } catch (error) {
-    console.error("Error deleting SNI:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Error" }, { status: 500 });
   }
+}
+
+function unauthorizedResponse() {
+  return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    status: 401,
+    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+  });
 }

@@ -1,32 +1,38 @@
 {
   "rules": {
     "vpsAccounts": {
-      ".read": "auth != null",
-      ".write": "auth != null",
+      ".read": "auth != null && auth.token.email_verified == true",
+      ".write": "auth != null && auth.token.email_verified == true && auth.uid != null",
+      ".indexOn": ["type", "createdAt", "userId"],
       "$accountId": {
         ".validate": "newData.hasChildren(['type', 'server_name', 'status', 'createdAt', 'updatedAt'])",
         "type": {
-          ".validate": "newData.val() === 'SSH' || newData.val() === 'VMESS' || newData.val() === 'VLESS' || newData.val() === 'TROJAN' || newData.val() === 'SOCKS' || newData.val() === 'SHADOWSOCKS' || newData.val() === 'MS'"
+          ".validate": "newData.val().length <= 10 && (newData.val() === 'SSH' || newData.val() === 'VMESS' || newData.val() === 'VLESS' || newData.val() === 'TROJAN' || newData.val() === 'SOCKS' || newData.val() === 'SHADOWSOCKS' || newData.val() === 'MS')"
         },
-        "server_name": { ".validate": "newData.isString() && newData.val().length > 0" },
-        "ip_address": { ".validate": "newData.isString()" },
-        "username": { ".validate": "newData.isString()" },
-        "password": { ".validate": "newData.isString()" },
-        "expiry_date": { ".validate": "newData.isString()" },
-        "config": { ".validate": "newData.isString()" },
+        "server_name": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" },
+        "ip_address": { ".validate": "newData.isString() && newData.val().length <= 45" },
+        "username": { ".validate": "newData.isString() && newData.val().length <= 100" },
+        "password": { ".validate": "newData.isString() && newData.val().length <= 500" },
+        "expiry_date": { ".validate": "newData.isString() && newData.val().length <= 20" },
+        "config": { ".validate": "newData.isString() && newData.val().length <= 2000" },
         "status": { ".validate": "newData.val() === 'active' || newData.val() === 'inactive'" },
-        "userId": { ".validate": "newData.isString()" },
-        "createdAt": { ".validate": "newData.isNumber()" },
-        "updatedAt": { ".validate": "newData.isNumber()" },
+        "userId": { ".validate": "newData.isString() && newData.val() === auth.uid" },
+        "createdAt": { ".validate": "newData.isNumber() && newData.val() > 1700000000000 && newData.val() < 3000000000000" },
+        "updatedAt": { ".validate": "newData.isNumber() && newData.val() > 1700000000000 && newData.val() < 3000000000000" },
         "$other": { ".validate": false }
       }
     },
     "sni": {
-      ".read": "auth != null",
-      ".write": "auth != null",
+      ".read": "auth != null && auth.token.email_verified == true",
+      ".write": "auth != null && auth.token.email_verified == true && auth.uid != null",
+      ".indexOn": ["host"],
       "$name": {
         ".validate": "newData.hasChildren(['host'])",
-        "host": { ".validate": "newData.isString() && newData.val().length > 0" },
+        "host": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 253 && newData.val().matches(/^[a-zA-Z0-9.-]+$+[a-zA-Z0-9]$/)" },
+        "createdBy": { ".validate": "newData.isString()" },
+        "createdAt": { ".validate": "newData.isNumber()" },
+        "updatedBy": { ".validate": "newData.isString()" },
+        "updatedAt": { ".validate": "newData.isNumber()" },
         "$other": { ".validate": false }
       }
     },
