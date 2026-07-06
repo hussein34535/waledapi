@@ -32,10 +32,10 @@ import { VpsAccount } from "@/lib/types"
 import { ref, update } from "firebase/database"
 import { database } from "@/lib/firebase"
 import { toast } from "sonner"
-import { X, Terminal, Wifi, Shield, Server } from "lucide-react"
+import { X, Terminal, Wifi } from "lucide-react"
 
 const formSchema = z.object({
-  type: z.enum(["SSH", "VMESS", "VLESS", "TROJAN", "SOCKS", "SHADOWSOCKS"]),
+  type: z.enum(["SSH", "VMESS", "VLESS"]),
   server_name: z.string().min(1, "Server name is required"),
   ip_address: z.string().optional(),
   username: z.string().optional(),
@@ -45,13 +45,13 @@ const formSchema = z.object({
   status: z.enum(["active", "inactive"]),
 }).refine(data => {
   if (data.type === "SSH") return data.ip_address && data.username && data.password && data.expiry_date
-  if (["VMESS", "VLESS", "TROJAN", "SOCKS", "SHADOWSOCKS"].includes(data.type)) return data.config
+  if (["VMESS", "VLESS"].includes(data.type)) return data.config
   return true
 }, { message: "Required fields are missing", path: ["ip_address"] })
 
 type FormValues = z.infer<typeof formSchema>
 
-const TYPE_ICONS: Record<string, any> = { SSH: Terminal, VMESS: Wifi, VLESS: Wifi, TROJAN: Shield, SOCKS: Server, SHADOWSOCKS: Shield }
+const TYPE_ICONS: Record<string, any> = { SSH: Terminal, VMESS: Wifi, VLESS: Wifi }
 
 interface EditVpsAccountDialogProps {
   account: VpsAccount
@@ -78,7 +78,7 @@ export default function EditVpsAccountDialog({ account, open, onOpenChange, onAc
   })
 
   const watchType = form.watch("type")
-  const Icon = TYPE_ICONS[watchType] || Server
+  const Icon = TYPE_ICONS[watchType] || Wifi
 
   const onSubmit = async (values: FormValues) => {
     if (!account.id) return
@@ -130,10 +130,9 @@ export default function EditVpsAccountDialog({ account, open, onOpenChange, onAc
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent className="rounded-2xl border-border/60">
-                        {Object.entries(TYPE_ICONS).map(([key]) => (
-                          <SelectItem key={key} value={key}>{key}</SelectItem>
-                        ))}
-                        <SelectItem value="MS">MS</SelectItem>
+                        <SelectItem value="SSH">SSH</SelectItem>
+                        <SelectItem value="VMESS">VMess</SelectItem>
+                        <SelectItem value="VLESS">VLESS</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -211,7 +210,7 @@ export default function EditVpsAccountDialog({ account, open, onOpenChange, onAc
                 </>
               )}
 
-              {["VMESS", "VLESS", "TROJAN", "SOCKS", "SHADOWSOCKS"].includes(watchType) && (
+              {["VMESS", "VLESS"].includes(watchType) && (
                 <FormField control={form.control} name="config" render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-xs font-medium text-muted-foreground">Config</FormLabel>

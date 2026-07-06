@@ -4,7 +4,7 @@ import { useState } from "react"
 import type { VpsAccount } from "@/lib/types"
 import { formatDistanceToNow } from "date-fns"
 import { ar } from "date-fns/locale"
-import { Copy, Edit3, Trash2, Terminal, Wifi, Shield, Server, ChevronDown, ChevronUp, Check } from "lucide-react"
+import { Copy, Edit3, Trash2, Terminal, Wifi, ChevronDown, ChevronUp } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import EditVpsAccountDialog from "@/components/edit-vps-account-dialog"
 import DeleteVpsAccountDialog from "@/components/delete-vps-account-dialog"
@@ -19,20 +19,12 @@ const TYPE_ICONS: Record<string, any> = {
   SSH: Terminal,
   VMESS: Wifi,
   VLESS: Wifi,
-  TROJAN: Shield,
-  SOCKS: Server,
-  SHADOWSOCKS: Shield,
-  MS: Server,
 }
 
 const TYPE_COLORS: Record<string, string> = {
   SSH: "from-cyan-500 to-blue-600",
   VMESS: "from-violet-500 to-purple-600",
   VLESS: "from-emerald-500 to-teal-600",
-  TROJAN: "from-rose-500 to-pink-600",
-  SOCKS: "from-amber-500 to-orange-600",
-  SHADOWSOCKS: "from-indigo-500 to-blue-600",
-  MS: "from-slate-500 to-gray-600",
 }
 
 export default function VpsAccountsList({ accounts, isLoading, newAccountId }: VpsAccountsListProps) {
@@ -76,7 +68,7 @@ export default function VpsAccountsList({ accounts, isLoading, newAccountId }: V
     <>
       <div className="space-y-3">
         {accounts.map((account, idx) => {
-          const Icon = TYPE_ICONS[account.type] || Server
+          const Icon = TYPE_ICONS[account.type] || Terminal
           const gradient = TYPE_COLORS[account.type] || "from-primary to-primary"
           const isExpanded = expandedId === account.id
           const isNew = account.id === newAccountId

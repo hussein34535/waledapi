@@ -10,21 +10,17 @@ import { AddSniDialog } from "@/components/add-sni-dialog"
 import SniList from "@/components/sni-list"
 import { useAuth } from "@/components/auth-provider"
 import { database } from "@/lib/firebase"
-import { Plus, Server, Wifi, Terminal, Shield, Activity, Search } from "lucide-react"
+import { Plus, Server, Wifi, Terminal, Activity } from "lucide-react"
 
-type AccountType = "SSH" | "VMESS" | "VLESS" | "TROJAN" | "SOCKS" | "SHADOWSOCKS" | "MS"
+type AccountType = "SSH" | "VMESS" | "VLESS"
 
 const TYPE_META: Record<string, { label: string; icon: any; color: string }> = {
   SSH: { label: "SSH", icon: Terminal, color: "from-cyan-500/20 to-blue-500/10" },
   VMESS: { label: "VMess", icon: Wifi, color: "from-violet-500/20 to-purple-500/10" },
   VLESS: { label: "VLESS", icon: Wifi, color: "from-emerald-500/20 to-teal-500/10" },
-  TROJAN: { label: "Trojan", icon: Shield, color: "from-rose-500/20 to-pink-500/10" },
-  SOCKS: { label: "SOCKS", icon: Server, color: "from-amber-500/20 to-orange-500/10" },
-  SHADOWSOCKS: { label: "Shadowsocks", icon: Shield, color: "from-indigo-500/20 to-blue-500/10" },
-  MS: { label: "MS", icon: Server, color: "from-slate-500/20 to-gray-500/10" },
 }
 
-const SECTION_ORDER: AccountType[] = ["SSH", "VMESS", "VLESS", "TROJAN", "SOCKS", "SHADOWSOCKS", "MS"]
+const SECTION_ORDER: AccountType[] = ["SSH", "VMESS", "VLESS"]
 
 export default function Dashboard() {
   const { user } = useAuth()

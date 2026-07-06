@@ -19,10 +19,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { toast } from "sonner"
 import { ref, push, set } from "firebase/database"
 import { database } from "@/lib/firebase"
-import { X, Terminal, Wifi, Shield, Server, ChevronDown } from "lucide-react"
+import { X, Terminal, Wifi } from "lucide-react"
 
 const formSchema = z.object({
-  type: z.enum(["SSH", "VMESS", "VLESS", "TROJAN", "SOCKS", "SHADOWSOCKS"]),
+  type: z.enum(["SSH", "VMESS", "VLESS"]),
   server_name: z.string().min(1, "اسم السيرفر مطلوب"),
   ip_address: z.string().optional(),
   username: z.string().optional(),
@@ -38,9 +38,6 @@ const TYPE_OPTIONS = [
   { value: "SSH", label: "SSH", icon: Terminal },
   { value: "VMESS", label: "VMess", icon: Wifi },
   { value: "VLESS", label: "VLESS", icon: Wifi },
-  { value: "TROJAN", label: "Trojan", icon: Shield },
-  { value: "SOCKS", label: "SOCKS", icon: Server },
-  { value: "SHADOWSOCKS", label: "Shadowsocks", icon: Shield },
 ]
 
 interface AddVpsAccountDialogProps {
