@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { securityCheck, verifyAuthToken, validateEmail } from "@/lib/security";
+import { securityCheck, validateEmail } from "@/lib/security";
 
 export async function POST(request: Request) {
   try {
@@ -13,8 +13,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Invalid email or password" }, { status: 401 });
     }
 
-    if (!timestamp || Date.now() - parseInt(timestamp) < 2000 || Date.now() - parseInt(timestamp) > 60000) {
-      await new Promise(resolve => setTimeout(resolve, 3000));
+    if (!timestamp || typeof timestamp !== "string") {
+      return NextResponse.json({ message: "Invalid email or password" }, { status: 401 });
+    }
+
+    const ts = parseInt(timestamp, 10);
+    const elapsed = Date.now() - ts;
+    if (isNaN(ts) || elapsed > 120000) {
       return NextResponse.json({ message: "Invalid email or password" }, { status: 401 });
     }
 
@@ -37,16 +42,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Invalid email or password" }, { status: 401 });
     }
 
-    const passwordChecks = [/[A-Z]/, /[a-z]/, /[0-9]/, /[^A-Za-z0-9]/];
-    const hasMinComplexity = passwordChecks.filter(c => c.test(password)).length >= 2;
-    if (!hasMinComplexity) {
-      return NextResponse.json({ message: "Invalid email or password" }, { status: 401 });
-    }
-
     await signInWithEmailAndPassword(auth, email, password);
     return NextResponse.json({ message: "Login successful" }, { status: 200 });
   } catch {
-    await new Promise(resolve => setTimeout(resolve, 2000));
     return NextResponse.json({ message: "Invalid email or password" }, { status: 401 });
   }
 }
