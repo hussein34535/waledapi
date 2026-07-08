@@ -50,41 +50,22 @@ function parseSshString(s: string) {
   return { ip_address, username, password }
 }
 
-function parseSlowdnsString(s: string) {
-  const hashIdx = s.indexOf("#")
-  const sshPart = hashIdx === -1 ? s : s.slice(0, hashIdx)
-  const dnsPart = hashIdx === -1 ? "" : s.slice(hashIdx + 1)
-  const sshParsed = parseSshString(sshPart)
-  if (!sshParsed) return null
-  let dns_ip = ""
-  let ns = ""
-  let public_key = ""
-  if (dnsPart) {
-    const parts = dnsPart.split(":")
-    dns_ip = parts[0] || ""
-    ns = parts[1] || ""
-    public_key = parts.slice(2).join(":") || ""
-  }
-  return { ...sshParsed, dns_ip, ns, public_key }
-}
-
 function composeSshString(account: VpsAccount) {
   if (account.config) return account.config
   const port = account.ip_address?.includes(":") ? "" : ":443"
   return `${account.ip_address}${port}@${account.username}:${account.password}`
 }
 
-function composeSlowdnsString(account: VpsAccount) {
-  if (account.config) return account.config
-  const port = account.ip_address?.includes(":") ? "" : ":443"
-  return `${account.ip_address}${port}@${account.username}:${account.password}#${account.dns_ip || account.ip_address}:${account.ns || ""}:${account.public_key || ""}`
-}
-
 const formSchema = z.object({
   type: z.enum(["SSH", "VMESS", "VLESS", "SLOWDNS"]),
   server_name: z.string().min(1, "Server name is required"),
   ssh_string: z.string().optional(),
-  slowdns_string: z.string().optional(),
+  ip_address: z.string().optional(),
+  username: z.string().optional(),
+  password: z.string().optional(),
+  dns_ip: z.string().optional(),
+  ns: z.string().optional(),
+  public_key: z.string().optional(),
   expiry_date: z.string().optional(),
   config: z.string().optional(),
   status: z.enum(["active", "inactive"]),
@@ -113,7 +94,12 @@ export default function EditVpsAccountDialog({ account, open, onOpenChange, onAc
       type: account.type as any,
       server_name: account.server_name || "",
       ssh_string: account.type === "SSH" ? composeSshString(account) : "",
-      slowdns_string: account.type === "SLOWDNS" ? composeSlowdnsString(account) : "",
+      ip_address: account.ip_address || "",
+      username: account.username || "",
+      password: account.password || "",
+      dns_ip: account.dns_ip || "",
+      ns: account.ns || "",
+      public_key: account.public_key || "",
       expiry_date: account.expiry_date || "",
       status: account.status,
       config: account.type !== "SSH" && account.type !== "SLOWDNS" ? account.config : "",
@@ -138,17 +124,13 @@ export default function EditVpsAccountDialog({ account, open, onOpenChange, onAc
         updateData.expiry_date = values.expiry_date
         updateData.config = values.ssh_string
       } else if (values.type === "SLOWDNS") {
-        const parsed = values.slowdns_string ? parseSlowdnsString(values.slowdns_string) : null
-        if (parsed) {
-          updateData.ip_address = parsed.ip_address
-          updateData.username = parsed.username
-          updateData.password = parsed.password
-          updateData.dns_ip = parsed.dns_ip
-          updateData.ns = parsed.ns
-          updateData.public_key = parsed.public_key
-        }
+        updateData.ip_address = values.ip_address
+        updateData.username = values.username
+        updateData.password = values.password
+        updateData.dns_ip = values.dns_ip
+        updateData.ns = values.ns
+        updateData.public_key = values.public_key
         updateData.expiry_date = values.expiry_date
-        updateData.config = values.slowdns_string
       } else {
         updateData.config = values.config
       }
@@ -262,21 +244,64 @@ export default function EditVpsAccountDialog({ account, open, onOpenChange, onAc
 
               {watchType === "SLOWDNS" && (
                 <>
-                  <FormField control={form.control} name="slowdns_string" render={({ field }) => (
+                  <FormField control={form.control} name="ip_address" render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-medium text-muted-foreground">
-                        سطر SlowDNS (IP:Port@User:Pass#DNS_IP:NS:PublicKey)
-                      </FormLabel>
+                      <FormLabel className="text-xs font-medium text-muted-foreground">IP Address</FormLabel>
                       <FormControl>
-                        <Textarea
-                          placeholder={"72.62.61.226:443@jdshgkh4rr44:nldjhfldshg4#105.203.254.140:tns.waledssl.blog:cb296a077536ccf833fbb33d27aa02171cfd9b7c95c54f7fa585803d51e6f032"}
-                          className="min-h-[80px] rounded-xl border-border/60 bg-background/50 resize-none"
-                          {...field}
-                        />
+                        <Input placeholder="72.62.61.226" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField control={form.control} name="username" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-medium text-muted-foreground">Username</FormLabel>
+                        <FormControl>
+                          <Input placeholder="username" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="password" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-medium text-muted-foreground">Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="••••••••" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </div>
+                  <FormField control={form.control} name="dns_ip" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-medium text-muted-foreground">DNS IP</FormLabel>
+                      <FormControl>
+                        <Input placeholder="105.203.254.140" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField control={form.control} name="ns" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-medium text-muted-foreground">NS</FormLabel>
+                        <FormControl>
+                          <Input placeholder="tns.waledssl.blog" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="public_key" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-medium text-muted-foreground">Public Key</FormLabel>
+                        <FormControl>
+                          <Input placeholder="cb296a07..." {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </div>
                   <FormField control={form.control} name="expiry_date" render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-xs font-medium text-muted-foreground">تاريخ الانتهاء</FormLabel>

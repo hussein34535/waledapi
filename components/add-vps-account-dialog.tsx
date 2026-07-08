@@ -36,29 +36,16 @@ function parseSshString(s: string) {
   return { ip_address, username, password }
 }
 
-function parseSlowdnsString(s: string) {
-  const hashIdx = s.indexOf("#")
-  const sshPart = hashIdx === -1 ? s : s.slice(0, hashIdx)
-  const dnsPart = hashIdx === -1 ? "" : s.slice(hashIdx + 1)
-  const sshParsed = parseSshString(sshPart)
-  if (!sshParsed) return null
-  let dns_ip = ""
-  let ns = ""
-  let public_key = ""
-  if (dnsPart) {
-    const parts = dnsPart.split(":")
-    dns_ip = parts[0] || ""
-    ns = parts[1] || ""
-    public_key = parts.slice(2).join(":") || ""
-  }
-  return { ...sshParsed, dns_ip, ns, public_key }
-}
-
 const formSchema = z.object({
   type: z.enum(["SSH", "VMESS", "VLESS", "SLOWDNS"]),
   server_name: z.string().min(1, "اسم السيرفر مطلوب"),
   ssh_string: z.string().optional(),
-  slowdns_string: z.string().optional(),
+  ip_address: z.string().optional(),
+  username: z.string().optional(),
+  password: z.string().optional(),
+  dns_ip: z.string().optional(),
+  ns: z.string().optional(),
+  public_key: z.string().optional(),
   expiry_date: z.string().optional(),
   config: z.string().optional(),
   status: z.enum(["active", "inactive"]),
@@ -85,7 +72,7 @@ export function AddVpsAccountDialog({ open, onOpenChange, userId, onAccountAdded
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { type: "VLESS", server_name: "", ssh_string: "", slowdns_string: "", expiry_date: "", config: "", status: "active" },
+    defaultValues: { type: "VLESS", server_name: "", ssh_string: "", ip_address: "", username: "", password: "", dns_ip: "", ns: "", public_key: "", expiry_date: "", config: "", status: "active" },
   })
 
   const selectedType = form.watch("type")
@@ -96,21 +83,19 @@ export function AddVpsAccountDialog({ open, onOpenChange, userId, onAccountAdded
       const base: any = { type: values.type, server_name: values.server_name, status: values.status, userId: userId || "anonymous", createdAt: Date.now(), updatedAt: Date.now() }
       if (values.type === "SSH") {
         const parsed = values.ssh_string ? parseSshString(values.ssh_string) : null
-        base.ip_address = parsed?.ip_address || ""
-        base.username = parsed?.username || ""
-        base.password = parsed?.password || ""
+        base.ip_address = parsed?.ip_address || values.ip_address
+        base.username = parsed?.username || values.username
+        base.password = parsed?.password || values.password
         base.expiry_date = values.expiry_date
         base.config = values.ssh_string
       } else if (values.type === "SLOWDNS") {
-        const parsed = values.slowdns_string ? parseSlowdnsString(values.slowdns_string) : null
-        base.ip_address = parsed?.ip_address || ""
-        base.username = parsed?.username || ""
-        base.password = parsed?.password || ""
-        base.dns_ip = parsed?.dns_ip || ""
-        base.ns = parsed?.ns || ""
-        base.public_key = parsed?.public_key || ""
+        base.ip_address = values.ip_address
+        base.username = values.username
+        base.password = values.password
+        base.dns_ip = values.dns_ip
+        base.ns = values.ns
+        base.public_key = values.public_key
         base.expiry_date = values.expiry_date
-        base.config = values.slowdns_string
       } else {
         base.config = values.config
       }
@@ -226,21 +211,64 @@ export function AddVpsAccountDialog({ open, onOpenChange, userId, onAccountAdded
                 </>
               ) : selectedType === "SLOWDNS" ? (
                 <>
-                  <FormField control={form.control} name="slowdns_string" render={({ field }) => (
+                  <FormField control={form.control} name="ip_address" render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-medium text-muted-foreground">
-                        سطر SlowDNS (IP:Port@User:Pass#DNS_IP:NS:PublicKey)
-                      </FormLabel>
+                      <FormLabel className="text-xs font-medium text-muted-foreground">IP Address</FormLabel>
                       <FormControl>
-                        <Textarea
-                          placeholder={"72.62.61.226:443@jdshgkh4rr44:nldjhfldshg4#105.203.254.140:tns.waledssl.blog:cb296a077536ccf833fbb33d27aa02171cfd9b7c95c54f7fa585803d51e6f032"}
-                          className="min-h-[80px] rounded-xl border-border/60 bg-background/50 resize-none"
-                          {...field}
-                        />
+                        <Input placeholder="72.62.61.226" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField control={form.control} name="username" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-medium text-muted-foreground">Username</FormLabel>
+                        <FormControl>
+                          <Input placeholder="username" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="password" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-medium text-muted-foreground">Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="••••••••" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </div>
+                  <FormField control={form.control} name="dns_ip" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-medium text-muted-foreground">DNS IP</FormLabel>
+                      <FormControl>
+                        <Input placeholder="105.203.254.140" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField control={form.control} name="ns" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-medium text-muted-foreground">NS</FormLabel>
+                        <FormControl>
+                          <Input placeholder="tns.waledssl.blog" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="public_key" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-medium text-muted-foreground">Public Key</FormLabel>
+                        <FormControl>
+                          <Input placeholder="cb296a07..." {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </div>
                   <FormField control={form.control} name="expiry_date" render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-xs font-medium text-muted-foreground">تاريخ الانتهاء</FormLabel>
