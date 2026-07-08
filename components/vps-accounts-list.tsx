@@ -4,7 +4,7 @@ import { useState } from "react"
 import type { VpsAccount } from "@/lib/types"
 import { formatDistanceToNow } from "date-fns"
 import { ar } from "date-fns/locale"
-import { Copy, Edit3, Trash2, Terminal, Wifi, ChevronDown, ChevronUp } from "lucide-react"
+import { Copy, Edit3, Trash2, Terminal, Wifi, Globe, ChevronDown, ChevronUp } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import EditVpsAccountDialog from "@/components/edit-vps-account-dialog"
 import DeleteVpsAccountDialog from "@/components/delete-vps-account-dialog"
@@ -19,12 +19,14 @@ const TYPE_ICONS: Record<string, any> = {
   SSH: Terminal,
   VMESS: Wifi,
   VLESS: Wifi,
+  SLOWDNS: Globe,
 }
 
 const TYPE_COLORS: Record<string, string> = {
   SSH: "from-cyan-500 to-blue-600",
   VMESS: "from-violet-500 to-purple-600",
   VLESS: "from-emerald-500 to-teal-600",
+  SLOWDNS: "from-amber-500 to-orange-600",
 }
 
 export default function VpsAccountsList({ accounts, isLoading, newAccountId }: VpsAccountsListProps) {
@@ -144,9 +146,9 @@ export default function VpsAccountsList({ accounts, isLoading, newAccountId }: V
                         <Field label="Password" value="••••••••" masked={account.password} onCopy={() => copyText(account.password || "", "Password")} />
                         <Field label="تاريخ الانتهاء" value={account.expiry_date || ""} />
                       </>
-                    ) : (
+                    ) : ["VMESS", "VLESS", "SLOWDNS"].includes(account.type) ? (
                       <Field label="Config" value={account.config || ""} mono onCopy={() => copyText(account.config || "", "Config")} />
-                    )}
+                    ) : null}
                   </div>
 
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/20">

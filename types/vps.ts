@@ -1,1 +1,1 @@
-export type VpsAccountType = "SSH" | "VMESS" | "VLESS" | "TROJAN" | "SOCKS" | "SHADOWSOCKS" | "MS"; 
+export type VpsAccountType = "SSH" | "VMESS" | "VLESS" | "SLOWDNS" | "TROJAN" | "SOCKS" | "SHADOWSOCKS" | "MS"; 

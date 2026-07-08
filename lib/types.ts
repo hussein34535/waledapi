@@ -1,7 +1,7 @@
 export type VpsAccount = {
   id?: string
   userId?: string
-  type: "SSH" | "VMESS" | "VLESS" | "TROJAN" | "SOCKS" | "SHADOWSOCKS" | "MS"
+  type: "SSH" | "VMESS" | "VLESS" | "SLOWDNS" | "TROJAN" | "SOCKS" | "SHADOWSOCKS" | "MS"
   server_name: string
   ip_address: string
   username: string

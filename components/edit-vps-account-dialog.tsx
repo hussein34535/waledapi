@@ -57,14 +57,14 @@ function composeSshString(account: VpsAccount) {
 }
 
 const formSchema = z.object({
-  type: z.enum(["SSH", "VMESS", "VLESS"]),
+  type: z.enum(["SSH", "VMESS", "VLESS", "SLOWDNS"]),
   server_name: z.string().min(1, "Server name is required"),
   ssh_string: z.string().optional(),
   expiry_date: z.string().optional(),
   config: z.string().optional(),
   status: z.enum(["active", "inactive"]),
 }).refine(data => {
-  if (["VMESS", "VLESS"].includes(data.type)) return data.config
+  if (["VMESS", "VLESS", "SLOWDNS"].includes(data.type)) return data.config
   return true
 }, { message: "Required fields are missing", path: ["config"] })
 
@@ -160,6 +160,7 @@ export default function EditVpsAccountDialog({ account, open, onOpenChange, onAc
                         <SelectItem value="SSH">SSH</SelectItem>
                         <SelectItem value="VMESS">VMess</SelectItem>
                         <SelectItem value="VLESS">VLESS</SelectItem>
+                        <SelectItem value="SLOWDNS">SlowDNS</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -221,12 +222,16 @@ export default function EditVpsAccountDialog({ account, open, onOpenChange, onAc
                 </>
               )}
 
-              {["VMESS", "VLESS"].includes(watchType) && (
+              {["VMESS", "VLESS", "SLOWDNS"].includes(watchType) && (
                 <FormField control={form.control} name="config" render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-xs font-medium text-muted-foreground">Config</FormLabel>
                     <FormControl>
-                      <Input placeholder="Configuration URL" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
+                      <Textarea
+                        placeholder={watchType === "VMESS" ? "vmess://..." : watchType === "VLESS" ? "vless://..." : "slowdns://..."}
+                        className="min-h-[100px] rounded-xl border-border/60 bg-background/50 resize-none"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

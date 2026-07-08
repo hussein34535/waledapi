@@ -37,7 +37,7 @@ function parseSshString(s: string) {
 }
 
 const formSchema = z.object({
-  type: z.enum(["SSH", "VMESS", "VLESS"]),
+  type: z.enum(["SSH", "VMESS", "VLESS", "SLOWDNS"]),
   server_name: z.string().min(1, "اسم السيرفر مطلوب"),
   ssh_string: z.string().optional(),
   ip_address: z.string().optional(),
@@ -54,6 +54,7 @@ const TYPE_OPTIONS = [
   { value: "SSH", label: "SSH", icon: Terminal },
   { value: "VMESS", label: "VMess", icon: Wifi },
   { value: "VLESS", label: "VLESS", icon: Wifi },
+  { value: "SLOWDNS", label: "SlowDNS", icon: Wifi },
 ]
 
 interface AddVpsAccountDialogProps {
@@ -192,7 +193,7 @@ export function AddVpsAccountDialog({ open, onOpenChange, userId, onAccountAdded
                     <FormLabel className="text-xs font-medium text-muted-foreground">Config</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder={selectedType === "VMESS" ? "vmess://..." : selectedType === "VLESS" ? "vless://..." : "configuration URL"}
+                        placeholder={selectedType === "VMESS" ? "vmess://..." : selectedType === "VLESS" ? "vless://..." : "slowdns://..."}
                         className="min-h-[100px] rounded-xl border-border/60 bg-background/50 resize-none"
                         {...field}
                       />

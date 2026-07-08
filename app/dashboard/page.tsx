@@ -10,17 +10,18 @@ import { AddSniDialog } from "@/components/add-sni-dialog"
 import SniList from "@/components/sni-list"
 import { useAuth } from "@/components/auth-provider"
 import { database } from "@/lib/firebase"
-import { Plus, Server, Wifi, Terminal, Activity } from "lucide-react"
+import { Plus, Server, Wifi, Terminal, Activity, Globe } from "lucide-react"
 
-type AccountType = "SSH" | "VMESS" | "VLESS"
+type AccountType = "SSH" | "VMESS" | "VLESS" | "SLOWDNS"
 
 const TYPE_META: Record<string, { label: string; icon: any; color: string }> = {
   SSH: { label: "SSH", icon: Terminal, color: "from-cyan-500/20 to-blue-500/10" },
   VMESS: { label: "VMess", icon: Wifi, color: "from-violet-500/20 to-purple-500/10" },
   VLESS: { label: "VLESS", icon: Wifi, color: "from-emerald-500/20 to-teal-500/10" },
+  SLOWDNS: { label: "SlowDNS", icon: Globe, color: "from-amber-500/20 to-orange-500/10" },
 }
 
-const SECTION_ORDER: AccountType[] = ["SSH", "VMESS", "VLESS"]
+const SECTION_ORDER: AccountType[] = ["SSH", "VMESS", "VLESS", "SLOWDNS"]
 
 export default function Dashboard() {
   const { user } = useAuth()
@@ -203,7 +204,7 @@ export default function Dashboard() {
                     <Server className="h-8 w-8 text-primary" />
                   </div>
                   <h3 className="text-lg font-semibold mb-1">لا توجد حسابات</h3>
-                  <p className="text-sm text-muted-foreground mb-6">أضف حساب SSH أو VMess أو VLESS للبدء</p>
+                  <p className="text-sm text-muted-foreground mb-6">أضف حساب SSH أو VMess أو VLESS أو SlowDNS للبدء</p>
                   <button
                     onClick={() => setIsAddOpen(true)}
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-medium shadow-lg shadow-primary/25 active:scale-95 transition-all duration-200"
