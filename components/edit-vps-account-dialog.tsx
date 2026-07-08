@@ -50,27 +50,52 @@ function parseSshString(s: string) {
   return { ip_address, username, password }
 }
 
+function parseSlowdnsString(s: string) {
+  const hashIdx = s.indexOf("#")
+  const sshPart = hashIdx === -1 ? s : s.slice(0, hashIdx)
+  const dnsPart = hashIdx === -1 ? "" : s.slice(hashIdx + 1)
+  const sshParsed = parseSshString(sshPart)
+  if (!sshParsed) return null
+  let dns_ip = ""
+  let ns = ""
+  let public_key = ""
+  if (dnsPart) {
+    const parts = dnsPart.split(":")
+    dns_ip = parts[0] || ""
+    ns = parts[1] || ""
+    public_key = parts.slice(2).join(":") || ""
+  }
+  return { ...sshParsed, dns_ip, ns, public_key }
+}
+
 function composeSshString(account: VpsAccount) {
   if (account.config) return account.config
   const port = account.ip_address?.includes(":") ? "" : ":443"
   return `${account.ip_address}${port}@${account.username}:${account.password}`
 }
 
+function composeSlowdnsString(account: VpsAccount) {
+  if (account.config) return account.config
+  const port = account.ip_address?.includes(":") ? "" : ":443"
+  return `${account.ip_address}${port}@${account.username}:${account.password}#${account.dns_ip || account.ip_address}:${account.ns || ""}:${account.public_key || ""}`
+}
+
 const formSchema = z.object({
   type: z.enum(["SSH", "VMESS", "VLESS", "SLOWDNS"]),
   server_name: z.string().min(1, "Server name is required"),
   ssh_string: z.string().optional(),
+  slowdns_string: z.string().optional(),
   expiry_date: z.string().optional(),
   config: z.string().optional(),
   status: z.enum(["active", "inactive"]),
 }).refine(data => {
-  if (["VMESS", "VLESS", "SLOWDNS"].includes(data.type)) return data.config
+  if (["VMESS", "VLESS"].includes(data.type)) return data.config
   return true
 }, { message: "Required fields are missing", path: ["config"] })
 
 type FormValues = z.infer<typeof formSchema>
 
-const TYPE_ICONS: Record<string, any> = { SSH: Terminal, VMESS: Wifi, VLESS: Wifi }
+const TYPE_ICONS: Record<string, any> = { SSH: Terminal, VMESS: Wifi, VLESS: Wifi, SLOWDNS: Wifi }
 
 interface EditVpsAccountDialogProps {
   account: VpsAccount
@@ -88,9 +113,10 @@ export default function EditVpsAccountDialog({ account, open, onOpenChange, onAc
       type: account.type as any,
       server_name: account.server_name || "",
       ssh_string: account.type === "SSH" ? composeSshString(account) : "",
-      expiry_date: account.type === "SSH" ? account.expiry_date : "",
+      slowdns_string: account.type === "SLOWDNS" ? composeSlowdnsString(account) : "",
+      expiry_date: account.expiry_date || "",
       status: account.status,
-      config: account.type !== "SSH" ? account.config : "",
+      config: account.type !== "SSH" && account.type !== "SLOWDNS" ? account.config : "",
     },
   })
 
@@ -111,6 +137,18 @@ export default function EditVpsAccountDialog({ account, open, onOpenChange, onAc
         }
         updateData.expiry_date = values.expiry_date
         updateData.config = values.ssh_string
+      } else if (values.type === "SLOWDNS") {
+        const parsed = values.slowdns_string ? parseSlowdnsString(values.slowdns_string) : null
+        if (parsed) {
+          updateData.ip_address = parsed.ip_address
+          updateData.username = parsed.username
+          updateData.password = parsed.password
+          updateData.dns_ip = parsed.dns_ip
+          updateData.ns = parsed.ns
+          updateData.public_key = parsed.public_key
+        }
+        updateData.expiry_date = values.expiry_date
+        updateData.config = values.slowdns_string
       } else {
         updateData.config = values.config
       }
@@ -222,13 +260,42 @@ export default function EditVpsAccountDialog({ account, open, onOpenChange, onAc
                 </>
               )}
 
-              {["VMESS", "VLESS", "SLOWDNS"].includes(watchType) && (
+              {watchType === "SLOWDNS" && (
+                <>
+                  <FormField control={form.control} name="slowdns_string" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-medium text-muted-foreground">
+                        سطر SlowDNS (IP:Port@User:Pass#DNS_IP:NS:PublicKey)
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder={"72.62.61.226:443@jdshgkh4rr44:nldjhfldshg4#105.203.254.140:tns.waledssl.blog:cb296a077536ccf833fbb33d27aa02171cfd9b7c95c54f7fa585803d51e6f032"}
+                          className="min-h-[80px] rounded-xl border-border/60 bg-background/50 resize-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="expiry_date" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-medium text-muted-foreground">تاريخ الانتهاء</FormLabel>
+                      <FormControl>
+                        <input type="date" {...field} className="flex h-11 w-full rounded-xl border border-border/60 bg-background/50 px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                </>
+              )}
+
+              {["VMESS", "VLESS"].includes(watchType) && (
                 <FormField control={form.control} name="config" render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-xs font-medium text-muted-foreground">Config</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder={watchType === "VMESS" ? "vmess://..." : watchType === "VLESS" ? "vless://..." : "slowdns://..."}
+                        placeholder={watchType === "VMESS" ? "vmess://..." : "vless://..."}
                         className="min-h-[100px] rounded-xl border-border/60 bg-background/50 resize-none"
                         {...field}
                       />

@@ -11,6 +11,9 @@ export type VpsAccount = {
   createdAt: number
   updatedAt: number
   config?: string
+  dns_ip?: string
+  ns?: string
+  public_key?: string
 }
 
 export type SniConfig = {

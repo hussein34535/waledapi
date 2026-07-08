@@ -146,7 +146,17 @@ export default function VpsAccountsList({ accounts, isLoading, newAccountId }: V
                         <Field label="Password" value="••••••••" masked={account.password} onCopy={() => copyText(account.password || "", "Password")} />
                         <Field label="تاريخ الانتهاء" value={account.expiry_date || ""} />
                       </>
-                    ) : ["VMESS", "VLESS", "SLOWDNS"].includes(account.type) ? (
+                    ) : account.type === "SLOWDNS" ? (
+                      <>
+                        <Field label="IP Address" value={account.ip_address || ""} onCopy={() => copyText(account.ip_address || "", "IP")} />
+                        <Field label="Username" value={account.username || ""} onCopy={() => copyText(account.username || "", "Username")} />
+                        <Field label="Password" value="••••••••" masked={account.password} onCopy={() => copyText(account.password || "", "Password")} />
+                        <Field label="DNS IP" value={account.dns_ip || ""} onCopy={() => copyText(account.dns_ip || "", "DNS IP")} />
+                        <Field label="NS" value={account.ns || ""} onCopy={() => copyText(account.ns || "", "NS")} />
+                        <Field label="Public Key" value={account.public_key || ""} mono onCopy={() => copyText(account.public_key || "", "Public Key")} />
+                        <Field label="تاريخ الانتهاء" value={account.expiry_date || ""} />
+                      </>
+                    ) : ["VMESS", "VLESS"].includes(account.type) ? (
                       <Field label="Config" value={account.config || ""} mono onCopy={() => copyText(account.config || "", "Config")} />
                     ) : null}
                   </div>
