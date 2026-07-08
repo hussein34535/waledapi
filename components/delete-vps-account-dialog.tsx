@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { initializeApp } from "firebase/app"
-import { getDatabase, ref, remove } from "firebase/database"
+import { ref, remove } from "firebase/database"
+import { database } from "@/lib/firebase"
 import type { VpsAccount } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import {
@@ -14,17 +14,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useToast } from "@/components/ui/use-toast"
-
-// Direct Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyDRNcrIOz8mUHRqQk4d_JUualOIIBc9w4E",
-  authDomain: "waledpro-f.firebaseapp.com",
-  databaseURL: "https://waledpro-f-default-rtdb.firebaseio.com",
-  projectId: "waledpro-f",
-  storageBucket: "waledpro-f.firebasestorage.app",
-  messagingSenderId: "289358660533",
-  appId: "1:289358660533:web:8cff3ff3a9759e6f990ffc",
-}
 
 interface DeleteVpsAccountDialogProps {
   account: VpsAccount
@@ -42,13 +31,7 @@ export default function DeleteVpsAccountDialog({ account, open, onOpenChange }: 
     setIsDeleting(true)
 
     try {
-      // Initialize Firebase directly
-      const app = initializeApp(firebaseConfig)
-      const database = getDatabase(app)
-
-      // Reference to the specific account in Realtime Database
       const accountRef = ref(database, `vpsAccounts/${account.id}`)
-
       await remove(accountRef)
 
       toast({
