@@ -10,7 +10,7 @@ import { AddSniDialog } from "@/components/add-sni-dialog"
 import SniList from "@/components/sni-list"
 import { useAuth } from "@/components/auth-provider"
 import { database } from "@/lib/firebase"
-import { Plus, Server, Wifi, Terminal, Activity, Globe } from "lucide-react"
+import { Plus, Server, Wifi, Terminal, Activity, Globe, FileText, AlertTriangle, BarChart3 } from "lucide-react"
 
 type AccountType = "SSH" | "VMESS" | "VLESS" | "SLOWDNS"
 
@@ -194,6 +194,68 @@ export default function Dashboard() {
                         </div>
                       )
                     })}
+                  </>
+                )}
+
+                {hasAccounts && activeSection !== "SNI" && (
+                  <>
+                    <div className="rounded-2xl bg-card border border-border/50 p-5 animate-scale-in">
+                      <div className="flex items-center gap-2 mb-4">
+                        <BarChart3 className="h-4 w-4 text-primary" />
+                        <h2 className="text-sm font-semibold">توزيع الأنواع</h2>
+                      </div>
+                      <div className="space-y-3">
+                        {SECTION_ORDER.map((type) => {
+                          const meta = TYPE_META[type]
+                          const count = getByType(type).length
+                          const pct = totalAccounts ? Math.round((count / totalAccounts) * 100) : 0
+                          return (
+                            <div key={type}>
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center gap-2">
+                                  <meta.icon className="h-3.5 w-3.5 text-muted-foreground" />
+                                  <span className="text-xs font-medium">{meta.label}</span>
+                                </div>
+                                <span className="text-xs text-muted-foreground">{count} ({pct}%)</span>
+                              </div>
+                              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                                <div className={`h-full rounded-full bg-gradient-to-r ${meta.color.replace("/20", "").replace("/10", "")} transition-all duration-700`} style={{ width: `${pct}%` }} />
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    {(() => {
+                      const soon = accounts.filter(a => {
+                        if (!a.expiry_date || a.status !== "active") return false
+                        const diff = new Date(a.expiry_date).getTime() - Date.now()
+                        return diff > 0 && diff < 7 * 24 * 60 * 60 * 1000
+                      })
+                      if (soon.length === 0) return null
+                      return (
+                        <div className="rounded-2xl bg-card border border-border/50 p-5 animate-scale-in">
+                          <div className="flex items-center gap-2 mb-3">
+                            <AlertTriangle className="h-4 w-4 text-amber-500" />
+                            <h2 className="text-sm font-semibold">حسابات على وشك الانتهاء</h2>
+                          </div>
+                          <div className="space-y-2">
+                            {soon.map(a => (
+                              <div key={a.id} className="flex items-center justify-between text-sm py-1.5 px-3 rounded-xl bg-muted/30">
+                                <span className="font-medium">{a.server_name}</span>
+                                <span className="text-xs text-muted-foreground">{a.expiry_date}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })()}
+
+                    <a href="/api-docs" className="flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-border/50 text-sm text-muted-foreground hover:text-foreground hover:border-border transition-colors">
+                      <FileText className="h-4 w-4" />
+                      API Documentation
+                    </a>
                   </>
                 )}
               </div>
