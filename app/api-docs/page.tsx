@@ -4,7 +4,8 @@ import { ArrowLeft, Copy, Check } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
-const endpoints = [
+type Endpoint = { method: string; path: string; desc: string; auth?: string; body?: any; params?: any; response: any; note?: string }
+const endpoints: Endpoint[] = [
   {
     method: "POST",
     path: "/api/login",
@@ -17,31 +18,35 @@ const endpoints = [
     method: "GET",
     path: "/api/vps-accounts",
     desc: "جميع حسابات VPS",
-    params: { refresh: "?refresh=true (optional)" },
+    auth: "Bearer token (Firebase ID Token)",
     response: "{ [id: string]: VpsAccount }",
   },
   {
     method: "GET",
     path: "/api/ssh",
     desc: "حسابات SSH فقط",
+    auth: "Bearer token (Firebase ID Token)",
     response: "VpsAccount[]",
   },
   {
     method: "GET",
     path: "/api/vmess",
     desc: "حسابات VMess فقط",
+    auth: "Bearer token (Firebase ID Token)",
     response: "VpsAccount[]",
   },
   {
     method: "GET",
     path: "/api/vless",
     desc: "حسابات VLESS فقط",
+    auth: "Bearer token (Firebase ID Token)",
     response: "VpsAccount[]",
   },
   {
     method: "GET",
     path: "/api/slowdns",
     desc: "حسابات SlowDNS فقط",
+    auth: "Bearer token (Firebase ID Token)",
     response: "VpsAccount[]",
   },
   {
@@ -171,14 +176,17 @@ export default function ApiDocs() {
 
         <div className="rounded-2xl bg-card border border-border/50 p-5 mt-4">
           <h2 className="font-semibold mb-3">Integration Example (cURL)</h2>
-          <pre className="text-xs font-mono bg-muted/50 p-3 rounded-xl overflow-x-auto whitespace-pre">{`# Get all SSH accounts
-curl https://waledapis.vercel.app/api/ssh
+          <pre className="text-xs font-mono bg-muted/50 p-3 rounded-xl overflow-x-auto whitespace-pre">{`# 1. Get Firebase ID Token (from client SDK or Admin SDK)
 
-# Get all VMess accounts
-curl https://waledapis.vercel.app/api/vmess
+# 2. Use it as Bearer token in API calls
+curl https://waledapis.vercel.app/api/ssh \\
+  -H "Authorization: Bearer <FIREBASE_ID_TOKEN>"
 
-# Get all SlowDNS accounts
-curl https://waledapis.vercel.app/api/slowdns
+curl https://waledapis.vercel.app/api/vmess \\
+  -H "Authorization: Bearer <FIREBASE_ID_TOKEN>"
+
+curl https://waledapis.vercel.app/api/slowdns \\
+  -H "Authorization: Bearer <FIREBASE_ID_TOKEN>"
 
 # Login (then use Firebase Auth on client)
 curl -X POST https://waledapis.vercel.app/api/login \\
@@ -189,11 +197,10 @@ curl -X POST https://waledapis.vercel.app/api/login \\
         <div className="rounded-2xl bg-card border border-border/50 p-5 mt-4">
           <h2 className="font-semibold mb-3">Important Notes</h2>
           <ul className="text-sm text-muted-foreground space-y-2 list-disc pr-4">
+            <li>جميع الـ API endpoints محمية ومحتاجة Firebase ID Token في <code className="text-xs bg-muted px-1 rounded">Authorization: Bearer &lt;token&gt;</code></li>
             <li>Firebase Realtime Database هي المخزن الرئيسي للبيانات</li>
             <li>للتعديل/الإضافة/الحذف، استخدم Firebase SDK على العميل أو الـ Admin SDK</li>
             <li>API routes بتشتغل فقط على Vercel (مش متاحة في static export)</li>
-            <li>الـ GET endpoints بتجيب بيانات فقط، مفيش write APIs عامة</li>
-            <li>SNI endpoints محتاجة Firebase ID Token في Authorization header</li>
           </ul>
         </div>
       </div>
