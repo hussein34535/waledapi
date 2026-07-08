@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
+import { useSearchParams } from "next/navigation"
 import { ref, onValue } from "firebase/database"
 import type { VpsAccount } from "@/lib/types"
 import type { SniConfig } from "@/lib/types"
@@ -25,6 +26,7 @@ const SECTION_ORDER: AccountType[] = ["SSH", "VMESS", "VLESS", "SLOWDNS"]
 
 export default function Dashboard() {
   const { user } = useAuth()
+  const searchParams = useSearchParams()
   const [accounts, setAccounts] = useState<VpsAccount[]>([])
   const [sniList, setSniList] = useState<SniConfig[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -33,7 +35,7 @@ export default function Dashboard() {
   const [isSniOpen, setIsSniOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [newAccountId, setNewAccountId] = useState<string | null>(null)
-  const [activeSection, setActiveSection] = useState<string>("SSH")
+  const [activeSection, setActiveSection] = useState<string>(searchParams.get("s") === "sni" ? "SNI" : "SSH")
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
   const handleAccountAdded = (accountId: string) => {
@@ -124,9 +126,9 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {!isLoading && hasAccounts && (
+        {!isLoading && (
           <div className="flex gap-2 mb-6 overflow-x-auto scrollbar-none -mx-4 px-4">
-            {activeTypes.map((type, i) => {
+            {hasAccounts && activeTypes.map((type, i) => {
               const meta = TYPE_META[type]
               const count = getByType(type).length
               return (
@@ -150,6 +152,22 @@ export default function Dashboard() {
                 </button>
               )
             })}
+            <button
+              onClick={() => setActiveSection("SNI")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl whitespace-nowrap transition-all duration-300 active:scale-95 ${
+                activeSection === "SNI"
+                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                  : "bg-card border border-border/50 text-muted-foreground hover:text-foreground"
+              } animate-slide-up`}
+            >
+              <Globe className="h-4 w-4" />
+              <span className="text-sm font-medium">SNI</span>
+              {sniList.length > 0 && (
+                <span className={`text-xs px-1.5 py-0.5 rounded-md ${activeSection === "SNI" ? "bg-primary-foreground/15" : "bg-muted"}`}>
+                  {sniList.length}
+                </span>
+              )}
+            </button>
           </div>
         )}
 
