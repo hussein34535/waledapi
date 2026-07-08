@@ -21,6 +21,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
@@ -34,20 +35,38 @@ import { database } from "@/lib/firebase"
 import { toast } from "sonner"
 import { X, Terminal, Wifi } from "lucide-react"
 
+function parseSshString(s: string) {
+  const atIdx = s.indexOf("@")
+  if (atIdx === -1) return null
+  const hostPart = s.slice(0, atIdx)
+  const credPart = s.slice(atIdx + 1)
+  const colonIdx = credPart.indexOf(":")
+  if (colonIdx === -1) return null
+  const username = credPart.slice(0, colonIdx)
+  const password = credPart.slice(colonIdx + 1)
+  const hostColonIdx = hostPart.lastIndexOf(":")
+  let ip_address = hostPart
+  if (hostColonIdx !== -1) ip_address = hostPart.slice(0, hostColonIdx)
+  return { ip_address, username, password }
+}
+
+function composeSshString(account: VpsAccount) {
+  if (account.config) return account.config
+  const port = account.ip_address?.includes(":") ? "" : ":443"
+  return `${account.ip_address}${port}@${account.username}:${account.password}`
+}
+
 const formSchema = z.object({
   type: z.enum(["SSH", "VMESS", "VLESS"]),
   server_name: z.string().min(1, "Server name is required"),
-  ip_address: z.string().optional(),
-  username: z.string().optional(),
-  password: z.string().optional(),
+  ssh_string: z.string().optional(),
   expiry_date: z.string().optional(),
   config: z.string().optional(),
   status: z.enum(["active", "inactive"]),
 }).refine(data => {
-  if (data.type === "SSH") return data.ip_address && data.username && data.password && data.expiry_date
   if (["VMESS", "VLESS"].includes(data.type)) return data.config
   return true
-}, { message: "Required fields are missing", path: ["ip_address"] })
+}, { message: "Required fields are missing", path: ["config"] })
 
 type FormValues = z.infer<typeof formSchema>
 
@@ -68,9 +87,7 @@ export default function EditVpsAccountDialog({ account, open, onOpenChange, onAc
     defaultValues: {
       type: account.type as any,
       server_name: account.server_name || "",
-      ip_address: account.type === "SSH" ? account.ip_address : "",
-      username: account.type === "SSH" ? account.username : "",
-      password: account.type === "SSH" ? account.password : "",
+      ssh_string: account.type === "SSH" ? composeSshString(account) : "",
       expiry_date: account.type === "SSH" ? account.expiry_date : "",
       status: account.status,
       config: account.type !== "SSH" ? account.config : "",
@@ -84,9 +101,19 @@ export default function EditVpsAccountDialog({ account, open, onOpenChange, onAc
     if (!account.id) return
     setIsSubmitting(true)
     try {
-      const updateData: any = { ...values, updatedAt: Date.now() }
-      if (values.type !== "SSH") { delete updateData.ip_address; delete updateData.username; delete updateData.password; delete updateData.expiry_date }
-      if (values.type === "SSH") delete updateData.config
+      const updateData: any = { type: values.type, server_name: values.server_name, status: values.status, updatedAt: Date.now() }
+      if (values.type === "SSH") {
+        const parsed = values.ssh_string ? parseSshString(values.ssh_string) : null
+        if (parsed) {
+          updateData.ip_address = parsed.ip_address
+          updateData.username = parsed.username
+          updateData.password = parsed.password
+        }
+        updateData.expiry_date = values.expiry_date
+        updateData.config = values.ssh_string
+      } else {
+        updateData.config = values.config
+      }
       await update(ref(database, `vpsAccounts/${account.id}`), updateData)
       toast.success("تم تحديث الحساب بنجاح")
       onOpenChange(false)
@@ -169,40 +196,24 @@ export default function EditVpsAccountDialog({ account, open, onOpenChange, onAc
 
               {watchType === "SSH" && (
                 <>
-                  <FormField control={form.control} name="ip_address" render={({ field }) => (
+                  <FormField control={form.control} name="ssh_string" render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-medium text-muted-foreground">IP Address</FormLabel>
+                      <FormLabel className="text-xs font-medium text-muted-foreground">سطر الاتصال (IP:Port@Username:Password)</FormLabel>
                       <FormControl>
-                        <Input placeholder="192.168.1.1" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
+                        <Textarea
+                          placeholder="72.62.61.226:443@jdshgkh4rr44:nldjhfldshg4"
+                          className="min-h-[80px] rounded-xl border-border/60 bg-background/50 resize-none"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
-                  <div className="grid grid-cols-2 gap-3">
-                    <FormField control={form.control} name="username" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs font-medium text-muted-foreground">Username</FormLabel>
-                        <FormControl>
-                          <Input placeholder="username" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="password" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs font-medium text-muted-foreground">Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                  </div>
                   <FormField control={form.control} name="expiry_date" render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-medium text-muted-foreground">Expiry Date</FormLabel>
+                      <FormLabel className="text-xs font-medium text-muted-foreground">تاريخ الانتهاء</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
+                        <input type="date" {...field} className="flex h-11 w-full rounded-xl border border-border/60 bg-background/50 px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

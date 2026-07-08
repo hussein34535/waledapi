@@ -21,9 +21,25 @@ import { ref, push, set } from "firebase/database"
 import { database } from "@/lib/firebase"
 import { X, Terminal, Wifi } from "lucide-react"
 
+function parseSshString(s: string) {
+  const atIdx = s.indexOf("@")
+  if (atIdx === -1) return null
+  const hostPart = s.slice(0, atIdx)
+  const credPart = s.slice(atIdx + 1)
+  const colonIdx = credPart.indexOf(":")
+  if (colonIdx === -1) return null
+  const username = credPart.slice(0, colonIdx)
+  const password = credPart.slice(colonIdx + 1)
+  const hostColonIdx = hostPart.lastIndexOf(":")
+  let ip_address = hostPart
+  if (hostColonIdx !== -1) ip_address = hostPart.slice(0, hostColonIdx)
+  return { ip_address, username, password }
+}
+
 const formSchema = z.object({
   type: z.enum(["SSH", "VMESS", "VLESS"]),
   server_name: z.string().min(1, "اسم السيرفر مطلوب"),
+  ssh_string: z.string().optional(),
   ip_address: z.string().optional(),
   username: z.string().optional(),
   password: z.string().optional(),
@@ -52,7 +68,7 @@ export function AddVpsAccountDialog({ open, onOpenChange, userId, onAccountAdded
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { type: "VLESS", server_name: "", ip_address: "", username: "", password: "", expiry_date: "", config: "", status: "active" },
+    defaultValues: { type: "VLESS", server_name: "", ssh_string: "", ip_address: "", username: "", password: "", expiry_date: "", config: "", status: "active" },
   })
 
   const selectedType = form.watch("type")
@@ -62,7 +78,12 @@ export function AddVpsAccountDialog({ open, onOpenChange, userId, onAccountAdded
     try {
       const base: any = { type: values.type, server_name: values.server_name, status: values.status, userId: userId || "anonymous", createdAt: Date.now(), updatedAt: Date.now() }
       if (values.type === "SSH") {
-        Object.assign(base, { ip_address: values.ip_address, username: values.username, password: values.password, expiry_date: values.expiry_date })
+        const parsed = values.ssh_string ? parseSshString(values.ssh_string) : null
+        base.ip_address = parsed?.ip_address || values.ip_address
+        base.username = parsed?.username || values.username
+        base.password = parsed?.password || values.password
+        base.expiry_date = values.expiry_date
+        base.config = values.ssh_string
       } else {
         base.config = values.config
       }
@@ -152,46 +173,19 @@ export function AddVpsAccountDialog({ open, onOpenChange, userId, onAccountAdded
               )} />
 
               {selectedType === "SSH" ? (
-                <>
-                  <FormField control={form.control} name="ip_address" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs font-medium text-muted-foreground">IP Address</FormLabel>
-                      <FormControl>
-                        <Input placeholder="192.168.1.1" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <div className="grid grid-cols-2 gap-3">
-                    <FormField control={form.control} name="username" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs font-medium text-muted-foreground">Username</FormLabel>
-                        <FormControl>
-                          <Input placeholder="username" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="password" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs font-medium text-muted-foreground">Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                  </div>
-                  <FormField control={form.control} name="expiry_date" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs font-medium text-muted-foreground">تاريخ الانتهاء</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} className="h-11 rounded-xl border-border/60 bg-background/50" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                </>
+                <FormField control={form.control} name="ssh_string" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-medium text-muted-foreground">سطر الاتصال (IP:Port@Username:Password)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="72.62.61.226:443@jdshgkh4rr44:nldjhfldshg4"
+                        className="min-h-[80px] rounded-xl border-border/60 bg-background/50 resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
               ) : (
                 <FormField control={form.control} name="config" render={({ field }) => (
                   <FormItem>
