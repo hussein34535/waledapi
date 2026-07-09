@@ -180,13 +180,13 @@ export default function ApiDocs() {
 curl https://waledapis.vercel.app/api/ssh \\
   -H "Authorization: Bearer <FIREBASE_ID_TOKEN>"
 
-curl https://waledapis.vercel.app/api/vmess \\
-  -H "Authorization: Bearer <FIREBASE_ID_TOKEN>"
-
-# Option 2: API Key (for server-to-server / apps)
+# Option 2: HMAC Token (time-based, changes every request, secure)
+# Client generates: hmac = HMAC-SHA256(secret, timestamp_ms)
+# Sends: X-Auth-Token: <timestamp_ms>.<hmac_hex>
 curl https://waledapis.vercel.app/api/ssh \\
-  -H "X-API-Key: <API_SECRET_KEY>"
+  -H "X-Auth-Token: 1712345678000.abc123def456..."
 
+# Option 3: Static API Key (server-to-server)
 curl https://waledapis.vercel.app/api/slowdns \\
   -H "X-API-Key: <API_SECRET_KEY>"`}</pre>
         </div>
@@ -194,11 +194,12 @@ curl https://waledapis.vercel.app/api/slowdns \\
         <div className="rounded-2xl bg-card border border-border/50 p-5 mt-4">
           <h2 className="font-semibold mb-3">Important Notes</h2>
           <ul className="text-sm text-muted-foreground space-y-2 list-disc pr-4">
-            <li>جميع الـ API endpoints محمية ومحتاجة توثيق (Bearer token أو API Key)</li>
+            <li>جميع الـ API endpoints محمية ومحتاجة توثيق</li>
+            <li><strong>HMAC Token (الأفضل):</strong> الوقت + HMAC في <code className="text-xs bg-muted px-1 rounded">X-Auth-Token: &lt;ts&gt;.&lt;hmac&gt;</code> — يتغير كل طلب، ينتهي بعد 5 دقائق، حتى لو اتشافت الـ request ميتقدرش يعاد استخدامها</li>
             <li><strong>Bearer token:</strong> Firebase ID Token في <code className="text-xs bg-muted px-1 rounded">Authorization: Bearer &lt;token&gt;</code></li>
-            <li><strong>API Key:</strong> مفتاح سري في <code className="text-xs bg-muted px-1 rounded">X-API-Key: &lt;key&gt;</code> (مناسب للتطبيقات والسيرفرات)</li>
+            <li><strong>API Key:</strong> مفتاح سري ثابت في <code className="text-xs bg-muted px-1 rounded">X-API-Key: &lt;key&gt;</code></li>
             <li>Firebase Realtime Database هي المخزن الرئيسي للبيانات</li>
-            <li>API routes بتشتغل فقط على Vercel (مش متاحة في static export)</li>
+            <li>API routes بتشتغل فقط على Vercel</li>
           </ul>
         </div>
       </div>

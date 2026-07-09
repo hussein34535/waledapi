@@ -1,4 +1,7 @@
+import crypto from "crypto"
+
 const BLACKLIST_DURATION = 24 * 60 * 60 * 1000;
+const AUTH_TOKEN_WINDOW_MS = 5 * 60 * 1000; // 5 min window for HMAC auth tokens
 const TARPIT_INITIAL_DELAY = 1000;
 const TARPIT_MAX_DELAY = 30000;
 const MAX_FAILED_LOGIN_ATTEMPTS = 3;
@@ -222,7 +225,32 @@ export function unauthorizedResponse() {
   })
 }
 
+function verifyHmacToken(request: Request): { uid: string; email: string } | null {
+  try {
+    const secret = process.env.API_SECRET_KEY
+    if (!secret) return null
+    const authHeader = request.headers.get("x-auth-token")
+    if (!authHeader) return null
+    const dotIdx = authHeader.indexOf(".")
+    if (dotIdx === -1) return null
+    const ts = authHeader.slice(0, dotIdx)
+    const hmac = authHeader.slice(dotIdx + 1)
+    if (!ts || !hmac) return null
+    const tsNum = parseInt(ts, 10)
+    if (isNaN(tsNum)) return null
+    const now = Date.now()
+    if (Math.abs(now - tsNum) > AUTH_TOKEN_WINDOW_MS) return null
+    const expected = crypto.createHmac("sha256", secret).update(ts).digest("hex")
+    if (hmac.length !== expected.length) return null
+    if (!crypto.timingSafeEqual(Buffer.from(hmac), Buffer.from(expected))) return null
+    return { uid: "api-client", email: "api@client" }
+  } catch { return null }
+}
+
 export async function verifyAuthToken(request: Request): Promise<{ uid: string; email: string } | null> {
+  const hmacResult = verifyHmacToken(request)
+  if (hmacResult) return hmacResult
+
   try {
     const apiKey = request.headers.get("x-api-key")
     if (apiKey && apiKey === process.env.API_SECRET_KEY) {
