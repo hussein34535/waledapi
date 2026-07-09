@@ -176,30 +176,28 @@ export default function ApiDocs() {
 
         <div className="rounded-2xl bg-card border border-border/50 p-5 mt-4">
           <h2 className="font-semibold mb-3">Integration Example (cURL)</h2>
-          <pre className="text-xs font-mono bg-muted/50 p-3 rounded-xl overflow-x-auto whitespace-pre">{`# 1. Get Firebase ID Token (from client SDK or Admin SDK)
-
-# 2. Use it as Bearer token in API calls
+          <pre className="text-xs font-mono bg-muted/50 p-3 rounded-xl overflow-x-auto whitespace-pre">{`# Option 1: Firebase ID Token (from client SDK)
 curl https://waledapis.vercel.app/api/ssh \\
   -H "Authorization: Bearer <FIREBASE_ID_TOKEN>"
 
 curl https://waledapis.vercel.app/api/vmess \\
   -H "Authorization: Bearer <FIREBASE_ID_TOKEN>"
 
-curl https://waledapis.vercel.app/api/slowdns \\
-  -H "Authorization: Bearer <FIREBASE_ID_TOKEN>"
+# Option 2: API Key (for server-to-server / apps)
+curl https://waledapis.vercel.app/api/ssh \\
+  -H "X-API-Key: <API_SECRET_KEY>"
 
-# Login (then use Firebase Auth on client)
-curl -X POST https://waledapis.vercel.app/api/login \\
-  -H "Content-Type: application/json" \\
-  -d '{"email":"user@example.com","password":"...","timestamp":"..."}'`}</pre>
+curl https://waledapis.vercel.app/api/slowdns \\
+  -H "X-API-Key: <API_SECRET_KEY>"`}</pre>
         </div>
 
         <div className="rounded-2xl bg-card border border-border/50 p-5 mt-4">
           <h2 className="font-semibold mb-3">Important Notes</h2>
           <ul className="text-sm text-muted-foreground space-y-2 list-disc pr-4">
-            <li>جميع الـ API endpoints محمية ومحتاجة Firebase ID Token في <code className="text-xs bg-muted px-1 rounded">Authorization: Bearer &lt;token&gt;</code></li>
+            <li>جميع الـ API endpoints محمية ومحتاجة توثيق (Bearer token أو API Key)</li>
+            <li><strong>Bearer token:</strong> Firebase ID Token في <code className="text-xs bg-muted px-1 rounded">Authorization: Bearer &lt;token&gt;</code></li>
+            <li><strong>API Key:</strong> مفتاح سري في <code className="text-xs bg-muted px-1 rounded">X-API-Key: &lt;key&gt;</code> (مناسب للتطبيقات والسيرفرات)</li>
             <li>Firebase Realtime Database هي المخزن الرئيسي للبيانات</li>
-            <li>للتعديل/الإضافة/الحذف، استخدم Firebase SDK على العميل أو الـ Admin SDK</li>
             <li>API routes بتشتغل فقط على Vercel (مش متاحة في static export)</li>
           </ul>
         </div>

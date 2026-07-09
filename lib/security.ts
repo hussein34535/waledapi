@@ -224,6 +224,13 @@ export function unauthorizedResponse() {
 
 export async function verifyAuthToken(request: Request): Promise<{ uid: string; email: string } | null> {
   try {
+    const apiKey = request.headers.get("x-api-key")
+    if (apiKey && apiKey === process.env.API_SECRET_KEY) {
+      return { uid: "api-client", email: "api@client" }
+    }
+  } catch { /* ignore */ }
+
+  try {
     const authHeader = request.headers.get("authorization")
     if (!authHeader || !authHeader.startsWith("Bearer ")) return null
     const idToken = authHeader.split("Bearer ")[1]
