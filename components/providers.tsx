@@ -7,6 +7,7 @@ import LoginForm from "@/components/login-form"
 import DashboardHeader from "@/components/dashboard-header"
 import { signOut } from "firebase/auth"
 import { auth } from "@/lib/firebase"
+import { Suspense } from "react"
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
@@ -16,9 +17,11 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   return (
     <>
       {user ? (
-        <DashboardHeader onLogout={() => signOut(auth)}>
-          {children}
-        </DashboardHeader>
+        <Suspense fallback={null}>
+          <DashboardHeader onLogout={() => signOut(auth)}>
+            {children}
+          </DashboardHeader>
+        </Suspense>
       ) : (
         <LoginForm />
       )}

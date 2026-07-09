@@ -1,5 +1,7 @@
 "use client"
 
+export const dynamic = "force-dynamic"
+
 import { useEffect, useState, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import { ref, onValue } from "firebase/database"

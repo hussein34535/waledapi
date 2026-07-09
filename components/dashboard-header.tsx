@@ -1,7 +1,5 @@
 "use client"
 
-"use client"
-
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { LogOut, Sun, Moon, Server, Globe } from "lucide-react";
 import { ReactNode } from "react";
