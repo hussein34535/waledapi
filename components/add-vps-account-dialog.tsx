@@ -78,9 +78,13 @@ export function AddVpsAccountDialog({ open, onOpenChange, userId, onAccountAdded
   const selectedType = form.watch("type")
 
   async function onSubmit(values: FormValues) {
+    if (!userId) {
+      toast.error("يجب تسجيل الدخول أولاً")
+      return
+    }
     setIsSubmitting(true)
     try {
-      const base: any = { type: values.type, server_name: values.server_name, status: values.status, userId: userId || "anonymous", createdAt: Date.now(), updatedAt: Date.now() }
+      const base: any = { type: values.type, server_name: values.server_name, status: values.status, userId, createdAt: Date.now(), updatedAt: Date.now() }
       if (values.type === "SSH") {
         const parsed = values.ssh_string ? parseSshString(values.ssh_string) : null
         base.ip_address = parsed?.ip_address || values.ip_address

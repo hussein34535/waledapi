@@ -17,7 +17,8 @@ export async function GET(req: NextRequest) {
     );
     response.headers.set('Cache-Control', 'no-store');
     return response;
-  } catch {
+  } catch (e) {
+    console.error('[vps-accounts] error:', e);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

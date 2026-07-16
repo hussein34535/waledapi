@@ -4,8 +4,8 @@ import { verifyAuthToken, securityCheck } from "@/lib/security";
 import { z } from "zod";
 
 const postSchema = z.object({
-  name: z.string().min(1).max(50).trim().regex(/^[a-zA-Z0-9_-]+$/),
-  host: z.string().min(1).max(253).trim().regex(/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/),
+  name: z.string().min(1).max(50).trim(),
+  host: z.string().min(1).max(253).trim(),
 });
 
 const putSchema = z.object({

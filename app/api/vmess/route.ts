@@ -14,12 +14,13 @@ export async function GET(req: NextRequest) {
     const snapshot = await adminDatabase.ref('vpsAccounts').once('value');
     const response = NextResponse.json(
       snapshot.exists()
-        ? Object.values(snapshot.val()).filter((a: any) => a.type === 'VMESS')
+        ? Object.values(snapshot.val()).filter((a: any) => a && typeof a === 'object' && a.type === 'VMESS')
         : []
     );
     response.headers.set('Cache-Control', 'no-store');
     return response;
-  } catch {
+  } catch (e) {
+    console.error('[vmess] error:', e);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
