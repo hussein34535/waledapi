@@ -7,13 +7,6 @@ import { getMessaging, getToken } from "firebase/messaging"
 // Firebase app name - using a consistent name prevents duplicate app errors
 const APP_NAME = "waledapi-app";
 
-// Add a timestamp parameter to avoid URL caching
-const addTimestampToURL = (url: string | undefined): string | undefined => {
-  if (!url) return url;
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}_ts=${Date.now()}`;
-};
-
 // Firebase configuration using environment variables
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_API_KEY,
@@ -49,23 +42,6 @@ if (typeof window !== 'undefined') {
     messaging = getMessaging(firebaseApp);
   } catch (error) {
     console.error("Firebase messaging not supported:", error);
-  }
-}
-
-// Database configuration for real-time data
-const dbConfig = {
-  // These settings help ensure we always get fresh data
-  synchronizeTabs: false, // Don't sync data across tabs
-};
-
-if (typeof window !== 'undefined') {
-  try {
-    database.app.options.databaseURL = addTimestampToURL(database.app.options.databaseURL);
-    if ((database as any).settings) {
-      (database as any).settings(dbConfig);
-    }
-  } catch {
-    // Non-critical configuration
   }
 }
 
