@@ -63,6 +63,11 @@ export default function Dashboard() {
   }
 
   useEffect(() => {
+    if (!user) {
+      setIsLoading(true)
+      return
+    }
+    setError(null)
     const accountsRef = ref(database, "vpsAccounts")
     const unsub = onValue(
       accountsRef,
@@ -80,9 +85,12 @@ export default function Dashboard() {
         setIsLoading(false)
       }
     )
-    fetchSniList()
     return () => unsub()
-  }, [])
+  }, [user])
+
+  useEffect(() => {
+    if (user) fetchSniList()
+  }, [user])
 
   const getByType = (type: AccountType) => accounts.filter((a) => a.type === type)
   const totalActive = accounts.filter((a) => a.status === "active").length

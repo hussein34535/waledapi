@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { database } from '@/lib/firebase';
-import { ref, get } from 'firebase/database';
+import { adminDatabase } from '@/lib/firebase-admin';
 import { verifyAuthToken } from '@/lib/security';
 
 export async function GET(req: NextRequest) {
   const user = await verifyAuthToken(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  if (!adminDatabase) {
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+
   try {
-    const snapshot = await get(ref(database, 'vpsAccounts'));
+    const snapshot = await adminDatabase.ref('vpsAccounts').once('value');
     const response = NextResponse.json(
       snapshot.exists()
         ? Object.values(snapshot.val()).filter((a: any) => a.type === 'SLOWDNS')
