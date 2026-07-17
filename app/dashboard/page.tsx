@@ -81,7 +81,7 @@ export default function Dashboard() {
         setIsLoading(false)
       },
       (err) => {
-        console.error('onValue error:', err.code, err.message)
+        console.error('onValue error:', err.message)
         setError(err.message)
         setIsLoading(false)
       }
