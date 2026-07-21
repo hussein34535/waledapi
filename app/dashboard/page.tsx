@@ -8,8 +8,9 @@ import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 import type { VpsAccount } from "@/lib/types"
 import { useAuth } from "@/components/auth-provider"
-import { database } from "@/lib/firebase"
-import { Layers, Activity, Clock, AlertTriangle, ChevronLeft, Server, Wifi, Terminal, Globe, BarChart3, Sun, Moon } from "lucide-react"
+import { database, db } from "@/lib/firebase"
+import { collection, getDocs } from "firebase/firestore"
+import { Layers, Activity, Clock, AlertTriangle, ChevronLeft, Server, Wifi, Terminal, Globe, BarChart3, Sun, Moon, Crown } from "lucide-react"
 
 type AccountType = "SSH" | "VMESS" | "VLESS" | "SLOWDNS"
 
@@ -27,12 +28,24 @@ export default function DashboardOverview() {
   const { user } = useAuth()
   const router = useRouter()
   const [accounts, setAccounts] = useState<VpsAccount[]>([])
+  const [premiumCount, setPremiumCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user) { setIsLoading(true); return }
     setError(null)
+
+    const loadPremium = async () => {
+      try {
+        const snap = await getDocs(collection(db, "users"))
+        let count = 0
+        snap.forEach(d => { if (d.data().isPremium === true) count++ })
+        setPremiumCount(count)
+      } catch {}
+    }
+    loadPremium()
+
     const accountsRef = ref(database, "vpsAccounts")
     const unsub = onValue(accountsRef, (snapshot) => {
       const data: VpsAccount[] = []
@@ -118,12 +131,12 @@ export default function DashboardOverview() {
         </div>
         <div className="rounded-xl bg-white dark:bg-[#1c1c1e] border border-black/5 dark:border-white/5 p-4">
           <div className="flex items-center gap-2 mb-3">
-            <div className="h-7 w-7 rounded-lg bg-[#AF52DE]/10 flex items-center justify-center">
-              <Layers className="h-3.5 w-3.5 text-[#AF52DE]" />
+            <div className="h-7 w-7 rounded-lg bg-[#FF9500]/10 flex items-center justify-center">
+              <Crown className="h-3.5 w-3.5 text-[#FF9500]" />
             </div>
           </div>
-          <p className="text-2xl font-bold tabular-nums">{SECTION_ORDER.filter(t => getByType(t).length > 0).length}</p>
-          <p className="text-[12px] text-[#86868b] dark:text-[#98989d] mt-0.5">نوع</p>
+          <p className="text-2xl font-bold tabular-nums">{premiumCount}</p>
+          <p className="text-[12px] text-[#86868b] dark:text-[#98989d] mt-0.5">مميز</p>
         </div>
         <div className="rounded-xl bg-white dark:bg-[#1c1c1e] border border-black/5 dark:border-white/5 p-4">
           <div className="flex items-center gap-2 mb-3">

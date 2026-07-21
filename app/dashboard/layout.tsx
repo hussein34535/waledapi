@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Layers, Server, Globe, DollarSign, Users } from "lucide-react"
+import { Layers, Server, Globe, DollarSign, Users, Shield } from "lucide-react"
 import type React from "react"
 
 const tabs = [
@@ -10,6 +10,7 @@ const tabs = [
   { href: "/dashboard/accounts", label: "الحسابات", icon: Server },
   { href: "/dashboard/sni", label: "SNI", icon: Globe },
   { href: "/dashboard/pricing", label: "الأسعار", icon: DollarSign },
+  { href: "/dashboard/admins", label: "المشرفين", icon: Shield },
   { href: "/dashboard/users", label: "المستخدمين", icon: Users },
 ]
 
