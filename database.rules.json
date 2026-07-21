@@ -2,7 +2,7 @@
   "rules": {
     "vpsAccounts": {
       ".read": "auth != null",
-      ".write": "auth != null && auth.uid != null",
+      ".write": "auth != null",
       ".indexOn": ["type", "createdAt", "userId"],
       "$accountId": {
         ".validate": "newData.hasChildren(['type', 'server_name', 'status', 'createdAt', 'updatedAt'])",
@@ -29,7 +29,7 @@
     },
     "sni": {
       ".read": "auth != null",
-      ".write": "auth != null && auth.uid != null",
+      ".write": "auth != null",
       ".indexOn": ["host"],
       "$name": {
         ".validate": "newData.hasChildren(['host'])",
@@ -39,6 +39,12 @@
         "updatedBy": { ".validate": "newData.isString() && newData.val() === auth.uid" },
         "updatedAt": { ".validate": "newData.isNumber()" },
         "$other": { ".validate": false }
+      }
+    },
+    "config": {
+      "pricing": {
+        ".read": "auth != null",
+        ".write": "auth != null"
       }
     },
     "$other": {
