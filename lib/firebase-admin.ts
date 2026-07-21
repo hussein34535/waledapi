@@ -37,7 +37,7 @@ try {
   console.error('Failed to initialize Firebase Admin:', error);
 }
 
-let adminDb, adminDatabase: Database | undefined;
+let adminDb: ReturnType<typeof getFirestore> | undefined, adminDatabase: Database | undefined;
 let adminMessaging: Messaging | undefined;
 
 if (firebaseAdminApp) {
