@@ -23,10 +23,10 @@ const TYPE_ICONS: Record<string, any> = {
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  SSH: "from-cyan-500 to-blue-600",
-  VMESS: "from-violet-500 to-purple-600",
-  VLESS: "from-emerald-500 to-teal-600",
-  SLOWDNS: "from-amber-500 to-orange-600",
+  SSH: "#007AFF",
+  VMESS: "#AF52DE",
+  VLESS: "#34C759",
+  SLOWDNS: "#FF9500",
 }
 
 export default function VpsAccountsList({ accounts, isLoading, newAccountId }: VpsAccountsListProps) {
@@ -42,19 +42,15 @@ export default function VpsAccountsList({ accounts, isLoading, newAccountId }: V
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-2">
         {[1, 2].map((i) => (
-          <div key={i} className="rounded-2xl bg-card border border-border/50 p-5">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="h-10 w-10 rounded-xl bg-muted animate-shimmer" />
+          <div key={i} className="rounded-2xl bg-white dark:bg-[#1c1c1e] border border-black/5 dark:border-white/5 p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-[#f2f2f7] dark:bg-[#2c2c2e] animate-pulse" />
               <div className="space-y-2 flex-1">
-                <div className="h-4 bg-muted rounded-lg w-1/3 animate-shimmer" />
-                <div className="h-3 bg-muted rounded-lg w-1/4 animate-shimmer" />
+                <div className="h-4 w-1/3 rounded-lg bg-[#f2f2f7] dark:bg-[#2c2c2e] animate-pulse" />
+                <div className="h-3 w-1/4 rounded-lg bg-[#f2f2f7] dark:bg-[#2c2c2e] animate-pulse" />
               </div>
-            </div>
-            <div className="space-y-2">
-              <div className="h-3 bg-muted rounded-lg w-full animate-shimmer" />
-              <div className="h-3 bg-muted rounded-lg w-2/3 animate-shimmer" />
             </div>
           </div>
         ))}
@@ -68,74 +64,67 @@ export default function VpsAccountsList({ accounts, isLoading, newAccountId }: V
 
   return (
     <>
-      <div className="space-y-3">
+      <div className="space-y-2">
         {accounts.map((account, idx) => {
           const Icon = TYPE_ICONS[account.type] || Terminal
-          const gradient = TYPE_COLORS[account.type] || "from-primary to-primary"
+          const color = TYPE_COLORS[account.type] || "#007AFF"
           const isExpanded = expandedId === account.id
           const isNew = account.id === newAccountId
 
           return (
             <div
               key={account.id}
-              className={`rounded-2xl bg-card border transition-all duration-500 ${
+              className={`rounded-2xl bg-white dark:bg-[#1c1c1e] border transition-all duration-300 ${
                 isNew
-                  ? "border-primary/40 shadow-lg shadow-primary/10 animate-glow-pulse"
-                  : "border-border/50 hover:border-border/80"
-              } ${isExpanded ? "shadow-md" : "shadow-sm"} animate-slide-up`}
-              style={{ animationDelay: `${idx * 60}ms` }}
+                  ? "border-[#007AFF]/30 shadow-[0_0_0_2px_rgba(0,122,255,0.1)]"
+                  : "border-black/5 dark:border-white/5"
+              }`}
             >
               <button
                 onClick={() => setExpandedId(isExpanded ? null : account.id!)}
-                className="w-full text-right p-4 active:bg-muted/20 transition-colors rounded-2xl"
+                className="w-full text-right p-4 active:bg-[#f2f2f7] dark:active:bg-[#2c2c2e] transition-colors rounded-2xl"
               >
                 <div className="flex items-center gap-3">
-                  <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${gradient} bg-opacity-20 flex items-center justify-center shadow-inner`}>
-                    <Icon className="h-5 w-5 text-white" />
+                  <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${color}14` }}>
+                    <Icon className="h-5 w-5" style={{ color }} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold truncate">{account.server_name}</span>
+                      <span className="font-semibold text-[15px] truncate">{account.server_name}</span>
                       {isNew && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
-                          جديد
-                        </span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#007AFF]/10 text-[#007AFF] font-medium">جديد</span>
                       )}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-muted-foreground">{account.type}</span>
-                      <span className={`h-1.5 w-1.5 rounded-full animate-status-pulse ${
-                        account.status === "active" ? "bg-success" : "bg-muted-foreground"
-                      }`} />
-                      <span className="text-xs text-muted-foreground">{account.status === "active" ? "نشط" : "غير نشط"}</span>
+                      <span className="text-[13px] text-[#86868b] dark:text-[#98989d]">{account.type}</span>
+                      <span className={`h-1.5 w-1.5 rounded-full ${account.status === "active" ? "bg-[#34C759]" : "bg-[#c7c7cc] dark:bg-[#636366]"}`} />
+                      <span className="text-[13px] text-[#86868b] dark:text-[#98989d]">{account.status === "active" ? "نشط" : "غير نشط"}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-0.5">
                     <button
                       onClick={(e) => { e.stopPropagation(); setEditAccount(account) }}
-                      className="h-8 w-8 rounded-xl hover:bg-muted flex items-center justify-center transition-colors active:scale-90"
+                      className="h-8 w-8 rounded-lg hover:bg-[#f2f2f7] dark:hover:bg-[#2c2c2e] flex items-center justify-center transition-colors active:scale-90"
                     >
-                      <Edit3 className="h-4 w-4 text-muted-foreground" />
+                      <Edit3 className="h-4 w-4 text-[#86868b] dark:text-[#98989d]" />
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); setDeleteAccount(account) }}
-                      className="h-8 w-8 rounded-xl hover:bg-destructive/10 flex items-center justify-center transition-colors active:scale-90"
+                      className="h-8 w-8 rounded-lg hover:bg-[#ff3b30]/10 flex items-center justify-center transition-colors active:scale-90"
                     >
-                      <Trash2 className="h-4 w-4 text-destructive/70" />
+                      <Trash2 className="h-4 w-4 text-[#ff3b30]/70" />
                     </button>
-                    <div className="h-6 w-6 flex items-center justify-center">
-                      {isExpanded ? (
-                        <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </div>
+                    {isExpanded ? (
+                      <ChevronUp className="h-4 w-4 text-[#c7c7cc] dark:text-[#48484a] mr-1" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-[#c7c7cc] dark:text-[#48484a] mr-1" />
+                    )}
                   </div>
                 </div>
               </button>
 
               {isExpanded && (
-                <div className="px-4 pb-4 pt-0 border-t border-border/30 mt-0 animate-scale-in">
+                <div className="px-4 pb-4 pt-0 border-t border-black/5 dark:border-white/5">
                   <div className="pt-3 space-y-2.5">
                     <Field label="اسم السيرفر" value={account.server_name} onCopy={() => copyText(account.server_name, "اسم السيرفر")} />
 
@@ -162,11 +151,11 @@ export default function VpsAccountsList({ accounts, isLoading, newAccountId }: V
                     ) : null}
                   </div>
 
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/20">
-                    <span className="text-2xs text-muted-foreground">
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-black/5 dark:border-white/5">
+                    <span className="text-[11px] text-[#86868b] dark:text-[#98989d]">
                       أضيف {formatDistanceToNow(account.createdAt, { addSuffix: true, locale: ar })}
                     </span>
-                    <span className="text-2xs text-muted-foreground">
+                    <span className="text-[11px] text-[#86868b] dark:text-[#98989d]">
                       آخر تحديث {account.updatedAt ? formatDistanceToNow(account.updatedAt, { addSuffix: true, locale: ar }) : "غير معروف"}
                     </span>
                   </div>
@@ -205,7 +194,7 @@ function Field({ label, value, mono, masked, onCopy }: {
 }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-[13px] text-[#86868b] dark:text-[#98989d]">{label}</span>
       <div className="flex items-center gap-1.5 max-w-[60%]">
         <span className={`text-sm truncate ${mono ? "font-mono text-[13px]" : "font-medium"}`}>
           {value}
@@ -213,9 +202,9 @@ function Field({ label, value, mono, masked, onCopy }: {
         {onCopy && (
           <button
             onClick={onCopy}
-            className="h-6 w-6 rounded-lg hover:bg-muted flex items-center justify-center shrink-0 active:scale-90 transition-all"
+            className="h-6 w-6 rounded-lg hover:bg-[#f2f2f7] dark:hover:bg-[#2c2c2e] flex items-center justify-center shrink-0 active:scale-90 transition-all"
           >
-            <Copy className="h-3 w-3 text-muted-foreground" />
+            <Copy className="h-3 w-3 text-[#86868b] dark:text-[#98989d]" />
           </button>
         )}
       </div>
