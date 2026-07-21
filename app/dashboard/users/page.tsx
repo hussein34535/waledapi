@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { useAuth } from "@/components/auth-provider"
-import { Search, Shield, Ban, UserCheck, AlertTriangle, Crown, Users } from "lucide-react"
+import { Search, Shield, Ban, UserCheck, AlertTriangle, Crown, Users, Sun, Moon } from "lucide-react"
+import { useTheme } from "next-themes"
 
 interface UserRecord {
   uid: string
@@ -16,6 +17,7 @@ interface UserRecord {
 }
 
 export default function UsersPage() {
+  const { setTheme, resolvedTheme } = useTheme()
   const { user } = useAuth()
   const [users, setUsers] = useState<UserRecord[]>([])
   const [search, setSearch] = useState("")
@@ -111,8 +113,14 @@ export default function UsersPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 pt-8 pb-12">
-      <div className="mb-6">
+      <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold">المستخدمين</h1>
+        <button
+          onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+          className="h-8 w-8 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 flex items-center justify-center transition-colors"
+        >
+          {resolvedTheme === "dark" ? <Sun className="h-4 w-4 text-[#8e8e93]" /> : <Moon className="h-4 w-4 text-[#8e8e93]" />}
+        </button>
       </div>
 
       {error && (

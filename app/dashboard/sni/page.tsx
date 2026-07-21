@@ -7,9 +7,11 @@ import type { SniConfig } from "@/lib/types"
 import { AddSniDialog } from "@/components/add-sni-dialog"
 import SniList from "@/components/sni-list"
 import { useAuth } from "@/components/auth-provider"
-import { Plus, Globe, AlertTriangle } from "lucide-react"
+import { Plus, Globe, AlertTriangle, Sun, Moon } from "lucide-react"
+import { useTheme } from "next-themes"
 
 export default function SniPage() {
+  const { setTheme, resolvedTheme } = useTheme()
   const { user } = useAuth()
   const [sniList, setSniList] = useState<SniConfig[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -37,17 +39,25 @@ export default function SniPage() {
     <div className="max-w-2xl mx-auto px-5 pt-10">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-[28px] font-bold tracking-tight leading-[1.1]">إعدادات SNI</h1>
-          <p className="text-[#86868b] dark:text-[#98989d] text-[15px] mt-1">
+          <h1 className="text-xl font-bold">إعدادات SNI</h1>
+          <p className="text-[13px] text-[#86868b] dark:text-[#98989d] mt-0.5">
             {sniList.length} مُعد
           </p>
         </div>
-        <button
-          onClick={() => setIsOpen(true)}
-          className="h-[44px] w-[44px] rounded-full bg-[#007AFF] text-white flex items-center justify-center shadow-sm hover:shadow-md active:scale-90 transition-all"
-        >
-          <Plus className="h-5 w-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+            className="h-8 w-8 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 flex items-center justify-center transition-colors"
+          >
+            {resolvedTheme === "dark" ? <Sun className="h-4 w-4 text-[#8e8e93]" /> : <Moon className="h-4 w-4 text-[#8e8e93]" />}
+          </button>
+          <button
+            onClick={() => setIsOpen(true)}
+            className="h-9 w-9 rounded-full bg-[#007AFF] text-white flex items-center justify-center shadow-sm hover:shadow-md active:scale-90 transition-all"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       {error && (

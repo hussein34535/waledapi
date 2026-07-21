@@ -5,10 +5,11 @@ export const dynamic = "force-dynamic"
 import { useEffect, useState } from "react"
 import { ref, onValue } from "firebase/database"
 import { useRouter } from "next/navigation"
+import { useTheme } from "next-themes"
 import type { VpsAccount } from "@/lib/types"
 import { useAuth } from "@/components/auth-provider"
 import { database } from "@/lib/firebase"
-import { Layers, Activity, Clock, AlertTriangle, ChevronLeft, Server, Wifi, Terminal, Globe, BarChart3 } from "lucide-react"
+import { Layers, Activity, Clock, AlertTriangle, ChevronLeft, Server, Wifi, Terminal, Globe, BarChart3, Sun, Moon } from "lucide-react"
 
 type AccountType = "SSH" | "VMESS" | "VLESS" | "SLOWDNS"
 
@@ -22,6 +23,7 @@ const TYPE_META: Record<string, { label: string; icon: any; color: string }> = {
 const SECTION_ORDER: AccountType[] = ["SSH", "VMESS", "VLESS", "SLOWDNS"]
 
 export default function DashboardOverview() {
+  const { setTheme, resolvedTheme } = useTheme()
   const { user } = useAuth()
   const router = useRouter()
   const [accounts, setAccounts] = useState<VpsAccount[]>([])
@@ -83,9 +85,15 @@ export default function DashboardOverview() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 pt-8 pb-12">
-      {/* Welcome */}
-      <div className="mb-6">
+      {/* Welcome + Theme */}
+      <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold">الرئيسية</h1>
+        <button
+          onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+          className="h-8 w-8 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 flex items-center justify-center transition-colors"
+        >
+          {resolvedTheme === "dark" ? <Sun className="h-4 w-4 text-[#8e8e93]" /> : <Moon className="h-4 w-4 text-[#8e8e93]" />}
+        </button>
       </div>
 
       {/* Stats Cards */}

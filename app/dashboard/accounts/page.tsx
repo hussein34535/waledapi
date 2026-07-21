@@ -9,7 +9,8 @@ import VpsAccountsList from "@/components/vps-accounts-list"
 import { AddVpsAccountDialog } from "@/components/add-vps-account-dialog"
 import { useAuth } from "@/components/auth-provider"
 import { database } from "@/lib/firebase"
-import { Plus, Terminal, Wifi, Globe, AlertTriangle } from "lucide-react"
+import { Plus, Terminal, Wifi, Globe, AlertTriangle, Sun, Moon } from "lucide-react"
+import { useTheme } from "next-themes"
 
 type AccountType = "SSH" | "VMESS" | "VLESS" | "SLOWDNS"
 
@@ -23,6 +24,7 @@ const TYPE_META: Record<string, { label: string; icon: any }> = {
 const SECTION_ORDER: AccountType[] = ["SSH", "VMESS", "VLESS", "SLOWDNS"]
 
 export default function AccountsPage() {
+  const { setTheme, resolvedTheme } = useTheme()
   const { user } = useAuth()
   const [accounts, setAccounts] = useState<VpsAccount[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -65,17 +67,25 @@ export default function AccountsPage() {
     <div className="max-w-2xl mx-auto px-5 pt-10">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-[28px] font-bold tracking-tight leading-[1.1]">الحسابات</h1>
-          <p className="text-[#86868b] dark:text-[#98989d] text-[15px] mt-1">
+          <h1 className="text-xl font-bold">الحسابات</h1>
+          <p className="text-[13px] text-[#86868b] dark:text-[#98989d] mt-0.5">
             {accounts.length} حساب
           </p>
         </div>
-        <button
-          onClick={() => setIsAddOpen(true)}
-          className="h-[44px] w-[44px] rounded-full bg-[#007AFF] text-white flex items-center justify-center shadow-sm hover:shadow-md active:scale-90 transition-all"
-        >
-          <Plus className="h-5 w-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+            className="h-8 w-8 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 flex items-center justify-center transition-colors"
+          >
+            {resolvedTheme === "dark" ? <Sun className="h-4 w-4 text-[#8e8e93]" /> : <Moon className="h-4 w-4 text-[#8e8e93]" />}
+          </button>
+          <button
+            onClick={() => setIsAddOpen(true)}
+            className="h-9 w-9 rounded-full bg-[#007AFF] text-white flex items-center justify-center shadow-sm hover:shadow-md active:scale-90 transition-all"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       {error && (

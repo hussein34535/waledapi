@@ -6,7 +6,8 @@ import { useEffect, useState } from "react"
 import { ref, onValue } from "firebase/database"
 import { useAuth } from "@/components/auth-provider"
 import { database } from "@/lib/firebase"
-import { DollarSign, Terminal, Wifi, Globe, AlertTriangle } from "lucide-react"
+import { DollarSign, Terminal, Wifi, Globe, AlertTriangle, Sun, Moon } from "lucide-react"
+import { useTheme } from "next-themes"
 
 type AccountType = "SSH" | "VMESS" | "VLESS" | "SLOWDNS"
 
@@ -27,6 +28,7 @@ const DEFAULT_PRICING = {
 }
 
 export default function PricingPage() {
+  const { setTheme, resolvedTheme } = useTheme()
   const { user } = useAuth()
   const [pricing, setPricing] = useState(DEFAULT_PRICING)
   const [isLoading, setIsLoading] = useState(true)
@@ -61,15 +63,23 @@ export default function PricingPage() {
     <div className="max-w-2xl mx-auto px-5 pt-10">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-[28px] font-bold tracking-tight leading-[1.1]">أسعار الاشتراكات</h1>
-          <p className="text-[#86868b] dark:text-[#98989d] text-[15px] mt-1">شهري / ربع سنوي / سنوي</p>
+          <h1 className="text-xl font-bold">أسعار الاشتراكات</h1>
+          <p className="text-[13px] text-[#86868b] dark:text-[#98989d] mt-0.5">شهري / ربع سنوي / سنوي</p>
         </div>
-        {!isEditing && (
-          <button onClick={() => setIsEditing(true)}
-            className="h-9 px-4 rounded-full bg-[#007AFF] text-white text-sm font-medium hover:bg-[#007AFF]/90 active:scale-[0.97] transition-all">
-            تعديل
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+            className="h-8 w-8 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 flex items-center justify-center transition-colors"
+          >
+            {resolvedTheme === "dark" ? <Sun className="h-4 w-4 text-[#8e8e93]" /> : <Moon className="h-4 w-4 text-[#8e8e93]" />}
           </button>
-        )}
+          {!isEditing && (
+            <button onClick={() => setIsEditing(true)}
+              className="h-9 px-4 rounded-full bg-[#007AFF] text-white text-sm font-medium hover:bg-[#007AFF]/90 transition-colors">
+              تعديل
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (
