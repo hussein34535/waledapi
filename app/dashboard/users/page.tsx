@@ -1,7 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { collection, query, getDocs, doc, setDoc, orderBy } from "firebase/firestore"
 import { useAuth } from "@/components/auth-provider"
+import { db } from "@/lib/firebase"
 import { Search, Shield, Ban, UserCheck, AlertTriangle, Crown, Users, Sun, Moon } from "lucide-react"
 import { useTheme } from "next-themes"
 
@@ -16,6 +18,8 @@ interface UserRecord {
   premiumActivatedBy: string | null
 }
 
+const ADMIN_EMAILS = ["darkshadowdx3@gmail.com", "waledpro.f@gmail.com"]
+
 export default function UsersPage() {
   const { setTheme, resolvedTheme } = useTheme()
   const { user } = useAuth()
@@ -24,56 +28,66 @@ export default function UsersPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [isCheckingAdmin, setIsCheckingAdmin] = useState(true)
+  const [isChecking, setIsChecking] = useState(true)
 
   useEffect(() => {
-    const checkAdmin = async () => {
-      if (!user) return
+    if (!user) return
+
+    const checkAndLoad = async () => {
       try {
-        const token = await user.getIdToken()
-        const res = await fetch("/api/admin/users", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        if (res.status === 403) { setIsAdmin(false); setIsCheckingAdmin(false); return }
-        const data = await res.json()
-        setUsers(data.users || [])
+        const admin = ADMIN_EMAILS.includes(user.email || "")
+        if (!admin) {
+          const adminsSnap = await getDocs(collection(db, "admins"))
+          if (!adminsSnap.docs.some(d => d.id === user.uid)) {
+            setIsAdmin(false)
+            setIsChecking(false)
+            return
+          }
+        }
         setIsAdmin(true)
-      } catch { setIsAdmin(false) }
-      finally { setIsCheckingAdmin(false) }
+
+        const q = query(collection(db, "users"), orderBy("email"))
+        const snap = await getDocs(q)
+        const list: UserRecord[] = snap.docs.map(d => {
+          const data = d.data()
+          return {
+            uid: d.id,
+            email: data.email || null,
+            displayName: data.displayName || null,
+            photoURL: data.photoURL || null,
+            isPremium: data.isPremium === true,
+            isBanned: data.isBanned === true,
+            premiumActivatedAt: data.premiumActivatedAt || null,
+            premiumActivatedBy: data.premiumActivatedBy || null,
+          }
+        })
+        setUsers(list)
+      } catch {
+        setError("فشل في تحميل المستخدمين")
+      }
+      finally { setIsChecking(false); setIsLoading(false) }
     }
-    checkAdmin()
+
+    checkAndLoad()
   }, [user])
 
   const handleTogglePremium = async (uid: string, current: boolean) => {
     try {
-      const token = await user?.getIdToken()
-      const res = await fetch("/api/admin/users", {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ uid, field: "isPremium", value: !current }),
-      })
-      if (!res.ok) throw new Error()
+      const update: Record<string, any> = { isPremium: !current }
+      if (!current) {
+        update.premiumActivatedAt = new Date().toISOString()
+        update.premiumActivatedBy = user?.email || user?.uid
+      }
+      await setDoc(doc(db, "users", uid), update, { merge: true })
       setUsers(prev => prev.map(u => u.uid === uid ? { ...u, isPremium: !current } : u))
-    } catch { setError("فشل في تحديث حالة المستخدم") }
+    } catch { setError("فشل في تحديث البريميوم") }
   }
 
   const handleToggleBan = async (uid: string, current: boolean) => {
     try {
-      const token = await user?.getIdToken()
-      const res = await fetch("/api/admin/users", {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ uid, field: "isBanned", value: !current }),
-      })
-      if (!res.ok) throw new Error()
+      await setDoc(doc(db, "users", uid), { isBanned: !current }, { merge: true })
       setUsers(prev => prev.map(u => u.uid === uid ? { ...u, isBanned: !current } : u))
-    } catch { setError("فشل في تحديث حالة المستخدم") }
+    } catch { setError("فشل في تحديث الحظر") }
   }
 
   const filtered = users.filter(u => {
@@ -88,7 +102,7 @@ export default function UsersPage() {
     return "?"
   }
 
-  if (isCheckingAdmin) {
+  if (isChecking) {
     return (
       <div className="max-w-3xl mx-auto px-4 pt-8">
         <div className="rounded-xl bg-white dark:bg-[#1c1c1e] border border-black/5 dark:border-white/5 p-8 flex flex-col items-center gap-4">
@@ -131,7 +145,6 @@ export default function UsersPage() {
         </div>
       )}
 
-      {/* Search */}
       <div className="relative mb-4">
         <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#86868b] dark:text-[#98989d]" />
         <input
@@ -143,7 +156,6 @@ export default function UsersPage() {
         />
       </div>
 
-      {/* Users List */}
       {isLoading ? (
         <div className="space-y-2">
           {[1, 2, 3, 4, 5].map((i) => (
@@ -161,7 +173,9 @@ export default function UsersPage() {
       ) : filtered.length === 0 ? (
         <div className="rounded-xl bg-white dark:bg-[#1c1c1e] border border-black/5 dark:border-white/5 p-10 text-center">
           <Users className="h-10 w-10 text-[#86868b] dark:text-[#98989d] mx-auto mb-3" />
-          <p className="text-sm text-[#86868b] dark:text-[#98989d]">لا يوجد مستخدمين</p>
+          <p className="text-sm text-[#86868b] dark:text-[#98989d]">
+            {search ? "لا توجد نتائج" : "لا يوجد مستخدمين"}
+          </p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -172,7 +186,6 @@ export default function UsersPage() {
               }`}
             >
               <div className="flex items-center gap-3">
-                {/* Avatar */}
                 <div className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
                   u.isBanned
                     ? "bg-[#ff3b30]/10 text-[#ff3b30]"
@@ -182,8 +195,6 @@ export default function UsersPage() {
                 }`}>
                   {avatarInitial(u)}
                 </div>
-
-                {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className={`text-sm font-semibold truncate ${u.isBanned ? "text-[#ff3b30]/70" : ""}`}>
@@ -198,8 +209,6 @@ export default function UsersPage() {
                   </div>
                   <p className="text-[12px] text-[#86868b] dark:text-[#98989d] truncate">{u.email}</p>
                 </div>
-
-                {/* Actions */}
                 <div className="flex items-center gap-1 shrink-0">
                   <button
                     onClick={() => handleTogglePremium(u.uid, u.isPremium)}
@@ -210,8 +219,7 @@ export default function UsersPage() {
                     }`}
                     title={u.isPremium ? "إلغاء البريميوم" : "تفعيل البريميوم"}
                   >
-                    <Crown className={`h-4 w-4 ${u.isPremium ? "" : ""}`} />
-                  
+                    <Crown className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => handleToggleBan(u.uid, u.isBanned)}
@@ -233,5 +241,3 @@ export default function UsersPage() {
     </div>
   )
 }
-
-
