@@ -3,7 +3,9 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
-import { Layers, Server, Globe, DollarSign, Users, Sun, Moon } from "lucide-react"
+import { Layers, Server, Globe, DollarSign, Users, Sun, Moon, LogOut } from "lucide-react"
+import { signOut } from "firebase/auth"
+import { auth } from "@/lib/firebase"
 import type React from "react"
 
 const tabs = [
@@ -52,14 +54,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             })}
           </nav>
 
-          {/* Theme Toggle */}
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="h-8 w-8 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 flex items-center justify-center shrink-0 transition-colors"
-          >
-            <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-[#86868b] dark:text-[#98989d]" />
-            <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-[#86868b] dark:text-[#98989d]" />
-          </button>
+          {/* Theme & Logout */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="h-8 w-8 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 flex items-center justify-center shrink-0 transition-colors"
+            >
+              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-[#86868b] dark:text-[#98989d]" />
+              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-[#86868b] dark:text-[#98989d]" />
+            </button>
+            <button
+              onClick={() => signOut(auth)}
+              className="h-8 w-8 rounded-lg hover:bg-[#ff3b30]/10 flex items-center justify-center shrink-0 transition-colors"
+              title="تسجيل الخروج"
+            >
+              <LogOut className="h-4 w-4 text-[#86868b] dark:text-[#98989d] hover:text-[#ff3b30]" />
+            </button>
+          </div>
         </div>
       </header>
 
