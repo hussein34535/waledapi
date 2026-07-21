@@ -3,11 +3,17 @@ import { adminDatabase } from "@/lib/firebase-admin";
 import { verifyAuthToken, securityCheck } from "@/lib/security";
 import { z } from "zod";
 
-const pricingSchema = z.record(z.object({
-  monthly: z.number().min(0),
-  quarterly: z.number().min(0),
-  yearly: z.number().min(0),
-}));
+const pricingSchema = z.record(z.union([
+  z.object({
+    monthly: z.number().min(0),
+    quarterly: z.number().min(0),
+    yearly: z.number().min(0),
+  }),
+  z.object({
+    yearly_price: z.number().min(0),
+    currency: z.string(),
+  }),
+]));
 
 export async function GET() {
   if (!adminDatabase) {

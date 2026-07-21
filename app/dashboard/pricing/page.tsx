@@ -10,6 +10,8 @@ import { DollarSign, Terminal, Wifi, Globe, AlertTriangle, Sun, Moon } from "luc
 import { useTheme } from "next-themes"
 
 type AccountType = "SSH" | "VMESS" | "VLESS" | "SLOWDNS"
+type PricingEntry = { monthly: number; quarterly: number; yearly: number }
+type PricingData = Record<AccountType, PricingEntry> & { subscription?: { yearly_price: number; currency: string } }
 
 const TYPE_META: Record<string, { label: string; icon: any }> = {
   SSH: { label: "SSH", icon: Terminal },
@@ -25,12 +27,13 @@ const DEFAULT_PRICING = {
   VMESS: { monthly: 12, quarterly: 32, yearly: 120 },
   VLESS: { monthly: 12, quarterly: 32, yearly: 120 },
   SLOWDNS: { monthly: 18, quarterly: 48, yearly: 180 },
+  subscription: { yearly_price: 50, currency: "ج.م" },
 }
 
 export default function PricingPage() {
   const { setTheme, resolvedTheme } = useTheme()
   const { user } = useAuth()
-  const [pricing, setPricing] = useState(DEFAULT_PRICING)
+  const [pricing, setPricing] = useState<PricingData>(DEFAULT_PRICING)
   const [isLoading, setIsLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -131,6 +134,30 @@ export default function PricingPage() {
                 </div>
               )
             })}
+            {/* اشتراك التطبيق */}
+            <div className="rounded-xl bg-[#f2f2f7] dark:bg-[#2c2c2e] p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <DollarSign className="h-4 w-4 text-[#86868b] dark:text-[#98989d]" />
+                <span className="text-sm font-semibold">اشتراك التطبيق (سنوي)</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[11px] text-[#86868b] dark:text-[#98989d] block mb-1">السعر</label>
+                  <div className="relative">
+                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-[#86868b] dark:text-[#98989d]">$</span>
+                    <input type="number" value={pricing.subscription?.yearly_price || 0}
+                      onChange={(e) => setPricing((prev) => ({ ...prev, subscription: { ...prev.subscription!, yearly_price: parseInt(e.target.value) || 0, currency: prev.subscription?.currency || "ج.م" } }))}
+                      className="w-full h-10 rounded-lg border border-black/10 dark:border-white/10 bg-white dark:bg-[#1c1c1e] pl-2 pr-7 text-sm tabular-nums" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[11px] text-[#86868b] dark:text-[#98989d] block mb-1">العملة</label>
+                  <input type="text" value={pricing.subscription?.currency || "ج.م"}
+                    onChange={(e) => setPricing((prev) => ({ ...prev, subscription: { ...prev.subscription!, yearly_price: prev.subscription?.yearly_price || 0, currency: e.target.value } }))}
+                    className="w-full h-10 rounded-lg border border-black/10 dark:border-white/10 bg-white dark:bg-[#1c1c1e] px-3 text-sm tabular-nums" />
+                </div>
+              </div>
+            </div>
             <div className="flex gap-2 pt-1">
               <button onClick={() => setIsEditing(false)}
                 className="flex-1 h-11 rounded-xl bg-[#f2f2f7] dark:bg-[#2c2c2e] text-sm font-medium hover:bg-[#e5e5ea] dark:hover:bg-[#3a3a3c] transition-colors">
@@ -166,6 +193,16 @@ export default function PricingPage() {
                 </div>
               )
             })}
+            {/* اشتراك التطبيق */}
+            <div className="flex items-center px-5 py-3.5 bg-[#007AFF]/5">
+              <div className="flex items-center gap-2 flex-1">
+                <DollarSign className="h-4 w-4 text-[#007AFF]" />
+                <span className="text-sm font-medium text-[#007AFF]">اشتراك التطبيق</span>
+              </div>
+              <span className="w-16 text-center text-sm font-semibold tabular-nums">-</span>
+              <span className="w-16 text-center text-sm text-[#86868b] dark:text-[#98989d] tabular-nums">-</span>
+              <span className="w-16 text-center text-sm text-[#007AFF] font-semibold tabular-nums">{pricing.subscription?.yearly_price || 0} {pricing.subscription?.currency || "ج.م"}</span>
+            </div>
           </div>
         )}
       </div>
