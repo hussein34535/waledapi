@@ -18,8 +18,6 @@ interface UserRecord {
   premiumActivatedBy: string | null
 }
 
-const ADMIN_EMAILS = ["darkshadowdx3@gmail.com", "waledpro.f@gmail.com"]
-
 export default function UsersPage() {
   const { setTheme, resolvedTheme } = useTheme()
   const { user } = useAuth()
@@ -35,16 +33,22 @@ export default function UsersPage() {
 
     const checkAndLoad = async () => {
       try {
-        const admin = ADMIN_EMAILS.includes(user.email || "")
-        if (!admin) {
-          const adminsSnap = await getDocs(collection(db, "admins"))
-          if (!adminsSnap.docs.some(d => d.id === user.uid)) {
-            setIsAdmin(false)
-            setIsChecking(false)
-            return
-          }
+        const adminsSnap = await getDocs(collection(db, "admins"))
+        const isInAdmins = adminsSnap.docs.some(d => d.id === user.uid)
+
+        if (isInAdmins) {
+          setIsAdmin(true)
+        } else if (adminsSnap.size === 0) {
+          await setDoc(doc(db, "admins", user.uid), {
+            email: user.email,
+            addedAt: new Date().toISOString(),
+          })
+          setIsAdmin(true)
+        } else {
+          setIsAdmin(false)
+          setIsChecking(false)
+          return
         }
-        setIsAdmin(true)
 
         const q = query(collection(db, "users"), orderBy("email"))
         const snap = await getDocs(q)
