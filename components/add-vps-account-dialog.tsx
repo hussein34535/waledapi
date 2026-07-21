@@ -32,8 +32,12 @@ function parseSshString(s: string) {
   const password = credPart.slice(colonIdx + 1)
   const hostColonIdx = hostPart.lastIndexOf(":")
   let ip_address = hostPart
-  if (hostColonIdx !== -1) ip_address = hostPart.slice(0, hostColonIdx)
-  return { ip_address, username, password }
+  let port = "443"
+  if (hostColonIdx !== -1) {
+    ip_address = hostPart.slice(0, hostColonIdx)
+    port = hostPart.slice(hostColonIdx + 1)
+  }
+  return { ip_address, port, username, password }
 }
 
 const formSchema = z.object({
@@ -88,6 +92,7 @@ export function AddVpsAccountDialog({ open, onOpenChange, userId, onAccountAdded
       if (values.type === "SSH") {
         const parsed = values.ssh_string ? parseSshString(values.ssh_string) : null
         base.ip_address = parsed?.ip_address || values.ip_address
+        base.port = parsed?.port || ""
         base.username = parsed?.username || values.username
         base.password = parsed?.password || values.password
         base.expiry_date = values.expiry_date

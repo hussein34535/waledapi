@@ -142,6 +142,7 @@ export default function VpsAccountsList({ accounts, isLoading, newAccountId }: V
                     {account.type === "SSH" ? (
                       <>
                         <Field label="IP Address" value={account.ip_address || ""} onCopy={() => copyText(account.ip_address || "", "IP")} />
+                        <Field label="Port" value={account.port || "443"} onCopy={() => copyText(account.port || "443", "Port")} />
                         <Field label="Username" value={account.username || ""} onCopy={() => copyText(account.username || "", "Username")} />
                         <Field label="Password" value="••••••••" masked={account.password} onCopy={() => copyText(account.password || "", "Password")} />
                         <Field label="تاريخ الانتهاء" value={account.expiry_date || ""} />

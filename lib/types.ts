@@ -4,6 +4,7 @@ export type VpsAccount = {
   type: "SSH" | "VMESS" | "VLESS" | "SLOWDNS" | "TROJAN" | "SOCKS" | "SHADOWSOCKS" | "MS"
   server_name: string
   ip_address: string
+  port?: string
   username: string
   password: string
   expiry_date: string

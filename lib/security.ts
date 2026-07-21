@@ -227,7 +227,7 @@ export function unauthorizedResponse() {
 
 function verifyHmacToken(request: Request): { uid: string; email: string } | null {
   try {
-    const secret = process.env.API_SECRET_KEY
+    const secret = (process.env.API_SECRET_KEY || "").trim()
     if (!secret) return null
     const authHeader = request.headers.get("x-auth-token")
     if (!authHeader) return null

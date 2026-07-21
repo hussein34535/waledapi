@@ -46,14 +46,18 @@ function parseSshString(s: string) {
   const password = credPart.slice(colonIdx + 1)
   const hostColonIdx = hostPart.lastIndexOf(":")
   let ip_address = hostPart
-  if (hostColonIdx !== -1) ip_address = hostPart.slice(0, hostColonIdx)
-  return { ip_address, username, password }
+  let port = "443"
+  if (hostColonIdx !== -1) {
+    ip_address = hostPart.slice(0, hostColonIdx)
+    port = hostPart.slice(hostColonIdx + 1)
+  }
+  return { ip_address, port, username, password }
 }
 
 function composeSshString(account: VpsAccount) {
   if (account.config) return account.config
-  const port = account.ip_address?.includes(":") ? "" : ":443"
-  return `${account.ip_address}${port}@${account.username}:${account.password}`
+  const port = account.port || "443"
+  return `${account.ip_address}:${port}@${account.username}:${account.password}`
 }
 
 const formSchema = z.object({
@@ -118,6 +122,7 @@ export default function EditVpsAccountDialog({ account, open, onOpenChange, onAc
         const parsed = values.ssh_string ? parseSshString(values.ssh_string) : null
         if (parsed) {
           updateData.ip_address = parsed.ip_address
+          updateData.port = parsed.port
           updateData.username = parsed.username
           updateData.password = parsed.password
         }
