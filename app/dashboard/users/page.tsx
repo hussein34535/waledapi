@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { collection, query, getDocs, doc, setDoc, orderBy } from "firebase/firestore"
+import { signOut } from "firebase/auth"
 import { useAuth } from "@/components/auth-provider"
-import { db } from "@/lib/firebase"
+import { db, auth } from "@/lib/firebase"
 import { Search, Shield, Ban, UserCheck, AlertTriangle, Crown, Users, Sun, Moon } from "lucide-react"
 import { useTheme } from "next-themes"
 
@@ -149,7 +150,15 @@ export default function UsersPage() {
         <div className="rounded-xl bg-white dark:bg-[#1c1c1e] border border-black/5 dark:border-white/5 p-10 text-center">
           <Shield className="h-10 w-10 text-[#86868b] dark:text-[#98989d] mx-auto mb-3" />
           <h2 className="text-lg font-bold mb-1">غير مصرح</h2>
-          <p className="text-sm text-[#86868b] dark:text-[#98989d]">ليس لديك صلاحية الوصول لهذه الصفحة</p>
+          <p className="text-sm text-[#86868b] dark:text-[#98989d] mb-4">
+            حسابك الحالي ({user.email}) ليس لديه صلاحية المشرف
+          </p>
+          <button
+            onClick={() => signOut(auth)}
+            className="inline-block px-5 py-2.5 bg-[#FF3B30] text-white rounded-lg text-sm font-medium hover:bg-[#d70000] transition-colors"
+          >
+            تسجيل الخروج والتبديل
+          </button>
         </div>
       </div>
     )
