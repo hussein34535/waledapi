@@ -21,6 +21,10 @@ function generateCsrfToken(): string {
   return token;
 }
 
+function toSafeKey(str: string): string {
+  return str.replace(/[\.#$\[\]\/]/g, "_").trim();
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const blocked = await securityCheck(req, body);
@@ -40,19 +44,22 @@ export async function POST(req: NextRequest) {
     }
 
     const { name, host } = parsedData.data;
-    const existing = await adminDatabase.ref(`sni/${name}`).once("value");
+    const safeKey = toSafeKey(name);
+    const existing = await adminDatabase.ref(`sni/${safeKey}`).once("value");
     if (existing.exists()) {
       return NextResponse.json({ error: "Name already exists" }, { status: 409 });
     }
 
-    await adminDatabase.ref(`sni/${name}`).set({
+    await adminDatabase.ref(`sni/${safeKey}`).set({
+      name,
       host,
       createdBy: user.uid,
       createdAt: Date.now(),
     });
 
     return NextResponse.json({ message: "SNI added successfully", csrf: generateCsrfToken() }, { status: 201 });
-  } catch {
+  } catch (err) {
+    console.error("[SNI POST Error]", err);
     return NextResponse.json({ error: "Error" }, { status: 500 });
   }
 }
@@ -74,12 +81,15 @@ export async function GET(req: NextRequest) {
       const data = snapshot.val();
       const sniList = Object.keys(data).map(key => ({
         id: key,
-        host: data[key].host,
+        name: data[key].name || key,
+        host: data[key].host || "",
+        sni: data[key].host || "",
       }));
       return NextResponse.json(sniList, { status: 200 });
     }
     return NextResponse.json([], { status: 200 });
-  } catch {
+  } catch (err) {
+    console.error("[SNI GET Error]", err);
     return NextResponse.json({ error: "Error" }, { status: 500 });
   }
 }
