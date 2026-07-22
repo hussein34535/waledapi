@@ -1,8 +1,9 @@
 export function getFlagEmoji(name: string = ''): string {
   if (!name) return '🌐 ';
   const lower = name.toLowerCase();
-  // Check if string already contains a flag emoji (Unicode Regional Indicator Symbols U+1F1E6 to U+1F1FF)
-  if (/[\u{1F1E6}-\u{1F1FF}]/u.test(name)) return '';
+
+  // If name already starts with any emoji or flag, don't add another emoji
+  if (/^[\u{1F300}-\u{1F9FF}\u{1F1E6}-\u{1F1FF}]/u.test(name.trim())) return '';
 
   if (lower.includes('فرنسا') || lower.includes('fr') || lower.includes('france')) return '🇫🇷 ';
   if (lower.includes('بريطانيا') || lower.includes('uk') || lower.includes('england') || lower.includes('gb')) return '🇬🇧 ';
@@ -18,9 +19,12 @@ export function getFlagEmoji(name: string = ''): string {
 
 export function formatServerWithFlag(item: any) {
   if (!item || typeof item !== 'object') return item;
-  const rawName = item.server_name || item.name || 'Server';
+  let rawName = (item.server_name || item.name || 'Server').trim();
+  // Strip leading globe emojis if present to avoid duplication
+  rawName = rawName.replace(/^🌐\s*/g, '').trim();
+
   const flag = getFlagEmoji(rawName);
-  const formattedName = flag && !rawName.trim().startsWith(flag.trim()) ? `${flag}${rawName.trim()}` : rawName;
+  const formattedName = flag ? `${flag}${rawName}` : rawName;
   return {
     ...item,
     server_name: formattedName,
