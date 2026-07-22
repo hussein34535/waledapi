@@ -1,11 +1,12 @@
 export function getFlagEmoji(name: string = '', ip: string = ''): string {
   if (!name && !ip) return '🌐 ';
-  const lower = (name + ' ' + ip).toLowerCase();
+  // Strip leading globe or generic emoji first
+  const cleanName = name.replace(/^[\u{1F300}-\u{1F9FF}\u{1F1E6}-\u{1F1FF}]+\s*/u, '').trim();
+  const lower = (cleanName + ' ' + name + ' ' + ip).toLowerCase();
 
-  // If name already starts with any emoji or flag, don't add another emoji
-  if (/^[\u{1F300}-\u{1F9FF}\u{1F1E6}-\u{1F1FF}]/u.test(name.trim())) return '';
-
-  if (lower.includes('فرنسا') || lower.includes('fr') || lower.includes('france') || lower.includes('72.60.') || lower.includes('46.202.')) return '🇫🇷 ';
+  if (lower.includes('فرنسا') || lower.includes('fr') || lower.includes('france') || lower.includes('72.60.')) return '🇫🇷 ';
+  if (lower.includes('ليتوانيا') || lower.includes('lt') || lower.includes('lithuania') || lower.includes('46.202.')) return '🇱🇹 ';
+  if (lower.includes('المكسيك') || lower.includes('mx') || lower.includes('mexico') || lower.includes('187.77.') || lower.includes('187.124.')) return '🇲🇽 ';
   if (lower.includes('بريطانيا') || lower.includes('uk') || lower.includes('england') || lower.includes('gb')) return '🇬🇧 ';
   if (lower.includes('المانيا') || lower.includes('ألمانيا') || lower.includes('de') || lower.includes('germany') || lower.includes('185.')) return '🇩🇪 ';
   if (lower.includes('امريكا') || lower.includes('أمريكا') || lower.includes('us') || lower.includes('usa') || lower.includes('72.62.') || lower.includes('104.')) return '🇺🇸 ';

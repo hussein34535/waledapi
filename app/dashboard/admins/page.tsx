@@ -15,7 +15,7 @@ interface AdminRecord {
 
 export default function AdminsPage() {
   const { setTheme, resolvedTheme } = useTheme()
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [admins, setAdmins] = useState<AdminRecord[]>([])
   const [isAdmin, setIsAdmin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -24,7 +24,12 @@ export default function AdminsPage() {
   const [newUid, setNewUid] = useState("")
 
   useEffect(() => {
-    if (!user) return
+    if (authLoading) return
+
+    if (!user) {
+      setIsLoading(false)
+      return
+    }
 
     const load = async () => {
       try {
@@ -37,11 +42,12 @@ export default function AdminsPage() {
         setIsAdmin(list.some(a => a.uid === user.uid))
       } catch {
         setError("فشل في تحميل المشرفين")
+      } finally {
+        setIsLoading(false)
       }
-      finally { setIsLoading(false) }
     }
     load()
-  }, [user])
+  }, [user, authLoading])
 
   const handleRemove = async (uid: string) => {
     if (uid === user?.uid) return

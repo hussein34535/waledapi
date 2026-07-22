@@ -20,7 +20,7 @@ interface UserRecord {
 
 export default function UsersPage() {
   const { setTheme, resolvedTheme } = useTheme()
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [users, setUsers] = useState<UserRecord[]>([])
   const [search, setSearch] = useState("")
   const [isLoading, setIsLoading] = useState(true)
@@ -29,7 +29,13 @@ export default function UsersPage() {
   const [isChecking, setIsChecking] = useState(true)
 
   useEffect(() => {
-    if (!user) return
+    if (authLoading) return
+
+    if (!user) {
+      setIsChecking(false)
+      setIsLoading(false)
+      return
+    }
 
     const checkAndLoad = async () => {
       try {
@@ -68,12 +74,14 @@ export default function UsersPage() {
         setUsers(list)
       } catch {
         setError("فشل في تحميل المستخدمين")
+      } finally {
+        setIsChecking(false)
+        setIsLoading(false)
       }
-      finally { setIsChecking(false); setIsLoading(false) }
     }
 
     checkAndLoad()
-  }, [user])
+  }, [user, authLoading])
 
   const handleTogglePremium = async (uid: string, current: boolean) => {
     try {
@@ -106,12 +114,30 @@ export default function UsersPage() {
     return "?"
   }
 
-  if (isChecking) {
+  if (isChecking || authLoading) {
     return (
       <div className="max-w-3xl mx-auto px-4 pt-8">
         <div className="rounded-xl bg-white dark:bg-[#1c1c1e] border border-black/5 dark:border-white/5 p-8 flex flex-col items-center gap-4">
           <div className="h-8 w-8 rounded-full border-2 border-[#007AFF] border-t-transparent animate-spin" />
           <p className="text-sm text-[#86868b] dark:text-[#98989d]">جاري التحقق...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 pt-8">
+        <div className="rounded-xl bg-white dark:bg-[#1c1c1e] border border-black/5 dark:border-white/5 p-10 text-center">
+          <Shield className="h-10 w-10 text-[#86868b] dark:text-[#98989d] mx-auto mb-3" />
+          <h2 className="text-lg font-bold mb-1">تسجيل الدخول مطلوب</h2>
+          <p className="text-sm text-[#86868b] dark:text-[#98989d] mb-4">يرجى تسجيل الدخول بحساب المشرف للوصول إلى لوحة التحكم</p>
+          <a
+            href="/login"
+            className="inline-block px-5 py-2.5 bg-[#007AFF] text-white rounded-lg text-sm font-medium hover:bg-[#0056b3] transition-colors"
+          >
+            تسجيل الدخول
+          </a>
         </div>
       </div>
     )

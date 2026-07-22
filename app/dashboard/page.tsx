@@ -25,7 +25,7 @@ const SECTION_ORDER: AccountType[] = ["SSH", "VMESS", "VLESS", "SLOWDNS"]
 
 export default function DashboardOverview() {
   const { setTheme, resolvedTheme } = useTheme()
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const [accounts, setAccounts] = useState<VpsAccount[]>([])
   const [premiumCount, setPremiumCount] = useState(0)
@@ -33,7 +33,13 @@ export default function DashboardOverview() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!user) { setIsLoading(true); return }
+    if (authLoading) return
+
+    if (!user) {
+      setIsLoading(false)
+      return
+    }
+
     setError(null)
 
     const loadPremium = async () => {
@@ -57,7 +63,7 @@ export default function DashboardOverview() {
       setIsLoading(false)
     }, (err) => { setError(err.message); setIsLoading(false) })
     return () => unsub()
-  }, [user])
+  }, [user, authLoading])
 
   const totalAccounts = accounts.length
   const totalActive = accounts.filter((a) => a.status === "active").length
