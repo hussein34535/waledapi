@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import SecurityGuard from "@/components/security-guard";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -28,7 +29,10 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className={`${inter.className} ${inter.variable} min-h-screen bg-background text-foreground antialiased`}>
-        <Providers>{children}</Providers>
+        <Providers>
+          <SecurityGuard />
+          {children}
+        </Providers>
       </body>
     </html>
   );

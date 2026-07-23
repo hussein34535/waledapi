@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { signInWithEmailAndPassword } from "firebase/auth"
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth"
 import { auth } from "@/lib/firebase"
 import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
@@ -127,6 +127,25 @@ export default function LoginForm() {
               تم تجاوز عدد المحاولات المسموح بها. يرجى الانتظار.
             </p>
           )}
+
+          <button
+            type="button"
+            onClick={async () => {
+              if (!email) {
+                toast({ title: "خطأ", description: "يرجى إدخال البريد الإلكتروني أولاً", variant: "destructive" })
+                return
+              }
+              try {
+                await sendPasswordResetEmail(auth, email)
+                toast({ title: "تم الإرسال", description: "تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك" })
+              } catch {
+                toast({ title: "خطأ", description: "فشل إرسال رابط إعادة التعيين. تأكد من صحة البريد", variant: "destructive" })
+              }
+            }}
+            className="text-xs text-primary/70 hover:text-primary mb-4 transition-colors w-full text-center"
+          >
+            نسيت كلمة المرور؟
+          </button>
 
           <Button
             type="submit"
