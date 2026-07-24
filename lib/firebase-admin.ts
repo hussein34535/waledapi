@@ -17,11 +17,16 @@ try {
         databaseURL: (process.env.NEXT_PUBLIC_DATABASE_URL || "").trim(),
       });
     } else if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+      const rawPrivateKey = process.env.FIREBASE_PRIVATE_KEY || "";
+      const formattedPrivateKey = rawPrivateKey.includes('\\n') 
+        ? rawPrivateKey.replace(/\\n/g, '\n') 
+        : rawPrivateKey;
+
       firebaseAdminApp = initializeApp({
         credential: cert({
           projectId: process.env.FIREBASE_PROJECT_ID,
           clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          privateKey: (process.env.FIREBASE_PRIVATE_KEY || "").replace(/\\n/g, '\n'),
+          privateKey: formattedPrivateKey,
         }),
         databaseURL: (process.env.NEXT_PUBLIC_DATABASE_URL || "").trim(),
       });
@@ -34,7 +39,7 @@ try {
     firebaseAdminApp = getApps()[0];
   }
 } catch (error) {
-  console.error('Failed to initialize Firebase Admin:', error);
+  console.error('[CRITICAL] Failed to initialize Firebase Admin SDK:', error);
 }
 
 let adminDb: ReturnType<typeof getFirestore> | undefined, adminDatabase: Database | undefined;

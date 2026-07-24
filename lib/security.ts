@@ -129,14 +129,11 @@ function getClientInfo(request: Request) {
 
 export async function securityCheck(request: Request, body?: any, isLogin: boolean = false): Promise<Response | null> {
   const ip = getIp(request)
-  const fingerprint = getFingerprint(request)
   const path = new URL(request.url).pathname
 
   if (isBlacklisted(ip)) {
     const entry = threatDb.get(ip)
     const remaining = entry ? Math.ceil((entry.blockedUntil - Date.now()) / 1000) : 3600
-    const tarpitDelay = Math.min(TARPIT_INITIAL_DELAY * (entry?.banCount || 1), TARPIT_MAX_DELAY)
-    await new Promise(resolve => setTimeout(resolve, tarpitDelay))
     return new Response(JSON.stringify({ error: "Access denied" }), {
       status: 403,
       headers: {
@@ -152,7 +149,6 @@ export async function securityCheck(request: Request, body?: any, isLogin: boole
     markThreat(ip)
     const info = getClientInfo(request)
     console.warn(`[SECURITY] Attack detected: ${attackType} from ${info.ip} | UA: ${info.ua.slice(0, 80)} | Path: ${path}`)
-    await new Promise(resolve => setTimeout(resolve, 5000))
     return new Response(JSON.stringify({ error: "Bad request" }), {
       status: 400,
       headers: { "Content-Type": "application/json", "X-Security-Status": "attack-blocked" },
@@ -162,8 +158,6 @@ export async function securityCheck(request: Request, body?: any, isLogin: boole
   if (isLogin) {
     if (!checkLoginRateLimit(ip)) {
       markThreat(ip, true)
-      const attempts = threatDb.get(ip)?.failedLogins || 0
-      await new Promise(resolve => setTimeout(resolve, attempts * 2000))
       return new Response(JSON.stringify({ error: "Too many attempts" }), {
         status: 429,
         headers: {

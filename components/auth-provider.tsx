@@ -3,8 +3,10 @@
 import type React from "react"
 
 import { createContext, useContext, useEffect, useState } from "react"
-import { onAuthStateChanged, type User } from "firebase/auth"
+import { onAuthStateChanged, signOut, type User } from "firebase/auth"
 import { auth } from "@/lib/firebase"
+
+const ALLOWED_EMAILS = ["hussona4635@gmail.com"]
 
 type AuthContextType = {
   user: User | null
@@ -23,14 +25,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-          setUser(user);
-          setLoading(false);
-        });
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        if (ALLOWED_EMAILS.includes(firebaseUser.email || "")) {
+          setUser(firebaseUser)
+        } else {
+          await signOut(auth)
+          setUser(null)
+        }
+      } else {
+        setUser(null)
+      }
+      setLoading(false)
+    })
 
     return () => unsubscribe()
   }, [])
 
   return <AuthContext.Provider value={{ user, loading }}>{children}</AuthContext.Provider>
 }
-

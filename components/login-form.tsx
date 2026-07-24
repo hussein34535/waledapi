@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth"
+import { signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from "firebase/auth"
 import { auth } from "@/lib/firebase"
 import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
@@ -31,33 +31,45 @@ export default function LoginForm() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (honeypotRef.current?.value) return
-
-    const elapsed = Date.now() - startTimeRef.current
-    if (elapsed < 2000) {
-      toast({ title: "خطأ", description: "يرجى الانتظار قليلاً قبل المحاولة", variant: "destructive" })
-      return
-    }
+    const honeypotVal = honeypotRef.current?.value || ""
+    if (honeypotVal) return
 
     setIsLoading(true)
     try {
-      const response = await fetch("/api/login", {
+      // Optional security pre-check (rate limit / honeypot check) without transmitting raw password to custom API
+      const secCheck = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, honeypot: "", timestamp: String(Date.now()) }),
+        body: JSON.stringify({ email, honeypot: honeypotVal }),
       })
-      if (!response.ok) {
+
+      if (!secCheck.ok) {
         setFailedAttempts((p) => p + 1)
-        toast({ title: "خطأ في تسجيل الدخول", description: "البريد الإلكتروني أو كلمة المرور غير صحيحة", variant: "destructive" })
+        toast({ title: "خطأ في تسجيل الدخول", description: "تعذر التحقق من الطلب أو تجاوز عدد المحاولات", variant: "destructive" })
         setIsLoading(false)
         return
       }
 
+      // Direct secure authentication using Firebase Client SDK
       await signInWithEmailAndPassword(auth, email, password)
+
+      const allowedEmails = ["hussona4635@gmail.com"]
+      if (!allowedEmails.includes(email.toLowerCase().trim())) {
+        await signOut(auth)
+        setFailedAttempts((p) => p + 1)
+        toast({ title: "غير مصرح", description: "هذا الحساب غير مصرح له بالدخول", variant: "destructive" })
+        setIsLoading(false)
+        return
+      }
+
       setFailedAttempts(0)
       router.push("/dashboard")
-    } catch {
-      toast({ title: "خطأ في الاتصال", description: "حدث خطأ في الاتصال بالخادم", variant: "destructive" })
+    } catch (err: any) {
+      setFailedAttempts((p) => p + 1)
+      const errorMsg = err?.code === "auth/invalid-credential" || err?.code === "auth/user-not-found" || err?.code === "auth/wrong-password"
+        ? "البريد الإلكتروني أو كلمة المرور غير صحيحة"
+        : "حدث خطأ أثناء تسجيل الدخول"
+      toast({ title: "خطأ في تسجيل الدخول", description: errorMsg, variant: "destructive" })
     }
     setIsLoading(false)
   }
@@ -163,6 +175,7 @@ export default function LoginForm() {
               "تسجيل الدخول"
             )}
           </Button>
+
         </form>
 
         <p className="text-xs text-muted-foreground/50 mt-8 animate-slide-up stagger-4">

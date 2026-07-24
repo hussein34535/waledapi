@@ -1,5 +1,6 @@
 "use client"
 
+import { Suspense } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Layers, Server, Globe, DollarSign, Users, Shield, LogOut } from "lucide-react"
@@ -54,7 +55,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </header>
 
-      <main className="pb-20">{children}</main>
+      <main className="pb-20">
+        <Suspense fallback={<div className="p-6 text-center text-muted-foreground">جاري التحميل...</div>}>
+          {children}
+        </Suspense>
+      </main>
 
       {/* iOS Tab Bar */}
       <nav className="fixed bottom-0 inset-x-0 z-50 bg-white/90 dark:bg-[#1c1c1e]/90 backdrop-blur-2xl border-t border-black/[0.04] dark:border-white/[0.04]">
