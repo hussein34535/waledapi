@@ -7,15 +7,17 @@ import { getMessaging, getToken } from "firebase/messaging"
 // Firebase app name - using a consistent name prevents duplicate app errors
 const APP_NAME = "waledapi-app";
 
+const clean = (val?: string) => (val || "").trim().replace(/[\r\n\t]+/g, "");
+
 // Firebase configuration using environment variables
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_AUTH_DOMAIN,
-  databaseURL: process.env.NEXT_PUBLIC_DATABASE_URL,
-  projectId: process.env.NEXT_PUBLIC_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_APP_ID
+  apiKey: clean(process.env.NEXT_PUBLIC_API_KEY) || "AIzaSyDRNcrIOz8mUHRqQk4d_JUualOIIBc9w4E",
+  authDomain: clean(process.env.NEXT_PUBLIC_AUTH_DOMAIN) || "waledpro-f.firebaseapp.com",
+  databaseURL: clean(process.env.NEXT_PUBLIC_DATABASE_URL) || "https://waledpro-f-default-rtdb.firebaseio.com",
+  projectId: clean(process.env.NEXT_PUBLIC_PROJECT_ID) || "waledpro-f",
+  storageBucket: clean(process.env.NEXT_PUBLIC_STORAGE_BUCKET) || "waledpro-f.firebasestorage.app",
+  messagingSenderId: clean(process.env.NEXT_PUBLIC_MESSAGING_SENDER_ID) || "289358660533",
+  appId: clean(process.env.NEXT_PUBLIC_APP_ID) || "1:289358660533:web:8cff3ff3a9759e6f990ffc"
 }
 
 let firebaseApp: FirebaseApp;

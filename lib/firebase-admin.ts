@@ -8,13 +8,15 @@ import path from 'path';
 
 let firebaseAdminApp;
 
+const cleanStr = (val?: string) => (val || "").trim().replace(/[\r\n\t]+/g, "");
+
 try {
   if (!getApps().length) {
     if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
-      const serviceAccount = JSON.parse(Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_KEY.trim(), 'base64').toString('utf-8'));
+      const serviceAccount = JSON.parse(Buffer.from(cleanStr(process.env.FIREBASE_SERVICE_ACCOUNT_KEY), 'base64').toString('utf-8'));
       firebaseAdminApp = initializeApp({
         credential: cert(serviceAccount),
-        databaseURL: (process.env.NEXT_PUBLIC_DATABASE_URL || "").trim(),
+        databaseURL: cleanStr(process.env.NEXT_PUBLIC_DATABASE_URL),
       });
     } else if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
       const rawPrivateKey = process.env.FIREBASE_PRIVATE_KEY || "";
@@ -24,15 +26,15 @@ try {
 
       firebaseAdminApp = initializeApp({
         credential: cert({
-          projectId: process.env.FIREBASE_PROJECT_ID,
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          projectId: cleanStr(process.env.FIREBASE_PROJECT_ID),
+          clientEmail: cleanStr(process.env.FIREBASE_CLIENT_EMAIL),
           privateKey: formattedPrivateKey,
         }),
-        databaseURL: (process.env.NEXT_PUBLIC_DATABASE_URL || "").trim(),
+        databaseURL: cleanStr(process.env.NEXT_PUBLIC_DATABASE_URL),
       });
     } else {
       firebaseAdminApp = initializeApp({
-        databaseURL: (process.env.NEXT_PUBLIC_DATABASE_URL || "").trim(),
+        databaseURL: cleanStr(process.env.NEXT_PUBLIC_DATABASE_URL),
       });
     }
   } else {
